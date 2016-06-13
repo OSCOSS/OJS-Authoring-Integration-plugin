@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
+
+<!--
+  * plugins/generic/ojsfw/locale/de_DE/locale.xml
+  * Localization strings for the de_DE (Deutsch (Deutschland)) locale.
+  *
+  -->
+<locale name="de_DE" full_name="Deutsch (Deutschland)">
+	<message key="plugins.generic.ojsfw.displayName">OJS and FW integration Plugin</message>
+	<message key="plugins.generic.ojsfw.description">Dieses Plug-In bietet integrierte Nutzung von OJS and FidusWriter als einige Systeme.</message>
+	<message key="plugins.generic.ojsfw.settings">Einstellungen</message>
+</locale>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
+<!--
+  * plugins/generic/ojsfw/version.xml
+  * Plugin version information.
+  -->
+<version>
+    <application>OJSFW</application>
+    <type>plugins.generic</type>
+    <release>1.0.0.0</release>
+    <date>2016-06-13</date>
+    <lazy-load>1</lazy-load>
+    <class>OJSFWIntegrationPlugin</class>
+</version>

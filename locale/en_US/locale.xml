@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
+
+<!--
+  * plugins/generic/ojsfw/locale/en_US/locale.xml
+  * Localization strings
+  -->
+ 
+<locale name="en_US" full_name="U.S. English">
+	<message key="plugins.generic.ojsfw.displayName">OJS and FW integration Plugin</message>
+	<message key="plugins.generic.ojsfw.description">This plugin provides usage of OJS and FidusWriter as one integrated system.</message>
+	<message key="plugins.generic.ojsfw.settings">Settings</message>
+</locale>

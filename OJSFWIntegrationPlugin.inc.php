@@ -59,11 +59,30 @@ class OJSFWIntegrationPlugin extends GenericPlugin
     function register($category, $path) {
         if (parent::register($category, $path)) {
             if ($this->getEnabled()) {
-              //todo : extend the class here
+                HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
             }
             return true;
         }
         return false;
     }
+
+    /**
+     * @param $hookName string
+     * @param $args array
+     * @return bool
+     **/
+    function callbackLoadCategory($hookName, $args) {
+        $category =& $args[0];
+        $plugins =& $args[1];
+        switch ($category) {
+            case 'gateways':
+                $this->import('OJSFWGatewayPlugin');
+                $gatewayPlugin = new OJSFWGatewayPlugin($this->getName());
+                $plugins[$gatewayPlugin->getSeq()][$gatewayPlugin->getPluginPath()] = $gatewayPlugin;
+                break;
+        }
+        return false;
+    }
     
+
 }

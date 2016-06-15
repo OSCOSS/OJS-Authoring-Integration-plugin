@@ -9,11 +9,13 @@
  */
 
 /**
- * @defgroup plugins_generic_webFeed Web Feed Plugin
+ * @defgroup plugins_generic_ojsfw ojs fw integration Plugin
  */
 
-require_once('OJSFWIntegrationPlugin.inc.php');
+if (!class_exists('OJSFWIntegrationPlugin')) {
 
-return new OJSFWIntegrationPlugin();
+    require_once('OJSFWIntegrationPlugin.inc.php');
 
+    return new OJSFWIntegrationPlugin();
+}
 ?>

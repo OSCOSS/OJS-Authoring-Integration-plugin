@@ -14,7 +14,7 @@ class OJSFWGatewayPlugin extends GatewayPlugin
     /** @var string Name of parent plugin */
     var $parentPluginName;
 
-    function OJSFWGatewayPlugin($parentPluginName)
+    public function OJSFWGatewayPlugin($parentPluginName)
     {
         parent::GatewayPlugin();
         $this->parentPluginName = $parentPluginName;
@@ -23,7 +23,7 @@ class OJSFWGatewayPlugin extends GatewayPlugin
     /**
      * Hide this plugin from the management interface (it's subsidiary)
      */
-    function getHideManagement()
+    public function getHideManagement()
     {
         return true;
     }
@@ -33,17 +33,17 @@ class OJSFWGatewayPlugin extends GatewayPlugin
      * its category.
      * @return String name of plugin
      */
-    function getName()
+    public function getName()
     {
         return 'OJSFWGatewayPlugin';
     }
 
-    function getDisplayName()
+    public function getDisplayName()
     {
         return __('plugins.generic.ojsfw.displayName');
     }
 
-    function getDescription()
+    public function getDescription()
     {
         return __('plugins.generic.ojsfw.description');
     }
@@ -52,7 +52,7 @@ class OJSFWGatewayPlugin extends GatewayPlugin
      * Get the OJSFWIntegrationPlugin plugin
      * @return OJSFWIntegrationPlugin
      */
-    function getOJSFWIntegrationPlugin()
+    public function getOJSFWIntegrationPlugin()
     {
         return PluginRegistry::getPlugin('generic', $this->parentPluginName);
     }
@@ -60,7 +60,7 @@ class OJSFWGatewayPlugin extends GatewayPlugin
     /**
      * Override the builtin to get the correct plugin path.
      */
-    function getPluginPath()
+    public function getPluginPath()
     {
         return $this->getOJSFWIntegrationPlugin()->getPluginPath();
     }
@@ -69,7 +69,7 @@ class OJSFWGatewayPlugin extends GatewayPlugin
      * Override the builtin to get the correct template path.
      * @return string
      */
-    function getTemplatePath()
+    public function getTemplatePath()
     {
         return $this->getOJSFWIntegrationPlugin()->getTemplatePath();
     }
@@ -79,7 +79,7 @@ class OJSFWGatewayPlugin extends GatewayPlugin
      * parent plugin will take care of loading this one when needed)
      * @return boolean
      */
-    function getEnabled()
+    public function getEnabled()
     {
         return $this->getOJSFWIntegrationPlugin()->getEnabled();
     }
@@ -91,17 +91,42 @@ class OJSFWGatewayPlugin extends GatewayPlugin
      * @param $request PKPRequest Request object
      * @return bool
      */
-    function fetch($args, $request)
+    public function fetch($args, $request)
     {
+        // Put and post requests are also routed here. Testing that by:
+        //$postVariableArray= $this->getPOSTPayloadVariable('afshinpayloadvariable');
+        //var_dump($postVariableArray);
+
         if (!$this->getEnabled()) {
             return false;
         }
 
+        $restCallType = $this->getRESTRequestType();
         $operator = array_shift($args);
         switch ($operator) {
-            case 'test': // Basic test  
-                $response = array("test message" => "rest is testing",
-                    "test version" => "1.0");
+            case 'test': // Basic test
+
+                if($restCallType === "GET")
+                $response = array(
+                    "test message" => "GET rest  is testing",
+                    "test version" => "1.0"
+            );
+                if($restCallType === "POST")
+                    $response = array(
+                        "test message" => "POST rest is testing",
+                        "test version" => "1.0"
+                    );
+
+                if($restCallType === "PUT")
+                    $response = array(
+                        "test message" => "PUT rest is testing",
+                        "test version" => "1.0"
+                    );
+                if($restCallType === "DELETE")
+                    $response = array(
+                        "test message" => "DELETE rest is testing",
+                        "test version" => "1.0"
+                    );
                 echo json_encode($response);
                 break;
 
@@ -111,16 +136,47 @@ class OJSFWGatewayPlugin extends GatewayPlugin
         }
         return true;
     }
-
+    
     /**
      * Display an error message and exit
      */
-    function showError()
+    public function showError()
     {
         header("HTTP/1.0 500 Internal Server Error");
         echo "internal server error";
         //todo extend with : echo Locale::translate('plugins.gateways.OJSFWGatewayPlugin.errors.errorMessage');
         exit;
+    }
+
+
+    /**
+     * @param $varName
+     * @return string
+     */
+    private function getPOSTPayloadVariable($varName){
+        
+        if(isset($_POST[$varName])){
+            return $_POST[$varName];
+        }
+        return "";
+    }
+
+    /**
+     * @return string
+     */
+    private function getRESTRequestType(){
+        $callType = $_SERVER['REQUEST_METHOD'];
+        switch ($callType){
+            case 'PUT':
+            case 'DELETE':
+            case 'GET':
+            case 'POST':
+                $result =  $callType;
+            break;
+            default:
+                $result = "";
+        }
+        return $result;
     }
 
 }

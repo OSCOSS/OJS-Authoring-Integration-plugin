@@ -1,0 +1,21 @@
+HOW:
+In OJSFWGatewayPlugin in  function fetch:
+
+add this line:
+echo getPOSTPayloadVariable('payloadvariable')
+
+ and make a POST call the route:
+
+ http://localhost:8000/ojs/index.php/TestJournalName/gateway/plugin/OJSFWGatewayPlugin/test
+
+with the payload
+
+variable                    value
+payloadvariable       payloadvalue
+
+
+EXPECTED:
+you must see in the answer:
+payloadvalue
+
+RESULT: as expected.

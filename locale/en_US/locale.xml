@@ -2,12 +2,12 @@
 <!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
 
 <!--
-  * plugins/generic/ojsfw/locale/en_US/locale.xml
+  * plugins/generic/ojsIntegrationRestApi/locale/en_US/locale.xml
   * Localization strings
   -->
  
 <locale name="en_US" full_name="U.S. English">
-	<message key="plugins.generic.ojsfw.displayName">OJS and FW integration Plugin</message>
-	<message key="plugins.generic.ojsfw.description">This plugin provides usage of OJS and FidusWriter as one integrated system.</message>
-	<message key="plugins.generic.ojsfw.settings">Settings</message>
+	<message key="plugins.generic.ojsIntegrationRestApi.displayName">OJS REST API Integration Plugin</message>
+	<message key="plugins.generic.ojsIntegrationRestApi.description">This plugin provides Rest API end points to use OJS and authoring tools as one integrated system.</message>
+	<message key="plugins.generic.ojsIntegrationRestApi.settings">Settings</message>
 </locale>

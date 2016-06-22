@@ -2,7 +2,7 @@
 <!DOCTYPE plugin_settings SYSTEM "../../../lib/pkp/dtd/pluginSettings.dtd">
 
 <!--
-  * plugins/generic/ojsfw/settings.xml
+  * plugins/generic/ojsIntegrationRestApi/settings.xml
   * Default plugin settings.
   *
   -->

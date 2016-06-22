@@ -2,12 +2,13 @@
 import('lib.pkp.classes.plugins.GenericPlugin');
 
 /**
- * Created by PhpStorm.
- * User: afshin
+ * Project OSCOSS
+ * University of Bonn
+ * User: afshin Sadeghi sadeghi@cs.uni-bonn.de
  * Date: 13/06/16
  * Time: 14:44
  */
-class OJSFWIntegrationPlugin extends GenericPlugin
+class IntegrationApiPlugin extends GenericPlugin
 {
 
 
@@ -36,7 +37,7 @@ class OJSFWIntegrationPlugin extends GenericPlugin
      */
     function getDisplayName()
     {
-        return __('plugins.generic.ojsfw.displayName');
+        return __('plugins.generic.ojsIntegrationRestApi.displayName');
 
     }
 
@@ -47,7 +48,7 @@ class OJSFWIntegrationPlugin extends GenericPlugin
      */
     function getDescription()
     {
-        return __('plugins.generic.ojsfw.description');
+        return __('plugins.generic.ojsIntegrationRestApi.description');
 
     }
 
@@ -76,8 +77,8 @@ class OJSFWIntegrationPlugin extends GenericPlugin
         $plugins =& $args[1];
         switch ($category) {
             case 'gateways':
-                $this->import('OJSFWGatewayPlugin');
-                $gatewayPlugin = new OJSFWGatewayPlugin($this->getName());
+                $this->import('RestApiGatewayPlugin');
+                $gatewayPlugin = new RestApiGatewayPlugin($this->getName());
                 $plugins[$gatewayPlugin->getSeq()][$gatewayPlugin->getPluginPath()] = $gatewayPlugin;
                 break;
         }

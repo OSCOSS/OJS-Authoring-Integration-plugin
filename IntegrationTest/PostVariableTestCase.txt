@@ -5,8 +5,9 @@ add this line:
 echo getPOSTPayloadVariable('payloadvariable')
 
  and make a POST call the route:
-
- http://localhost:8000/ojs/index.php/TestJournalName/gateway/plugin/OJSFWGatewayPlugin/test
+ http://localhost:8000/ojs/index.php/TestJournalName/gateway/plugin/RestApiGatewayPlugin/test
+ for example:
+http://localhost:8000/ojs/index.php/afshinTestJournal/gateway/plugin/RestApiGatewayPlugin/test
 
 with the payload
 

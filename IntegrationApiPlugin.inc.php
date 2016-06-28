@@ -52,6 +52,14 @@ class IntegrationApiPlugin extends GenericPlugin
 
     }
 
+
+    /**
+     * @see Plugin::isSitePlugin()
+     */
+    function isSitePlugin() {
+        return true;
+    }
+    
     /**
      * @param $category
      * @param $path

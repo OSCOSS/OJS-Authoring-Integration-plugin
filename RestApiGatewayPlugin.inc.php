@@ -16,14 +16,14 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
     /** @var string Name of parent plugin */
     public $parentPluginName;
-
-    /** PKPRequest */
-   // public $request; //have to be public due to plugin class
+    /** string API version */
+    private $APIVersion;
 
     public function RestApiGatewayPlugin($parentPluginName)
     {
         parent::GatewayPlugin();
         $this->parentPluginName = $parentPluginName;
+        $this->APIVersion = "1.0";
     }
 
     /**
@@ -33,6 +33,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
     {
         return true;
     }
+
 
     /**
      * Get the name of this plugin. The name must be unique within
@@ -52,6 +53,14 @@ class RestApiGatewayPlugin extends GatewayPlugin
     public function getDescription()
     {
         return __('plugins.generic.ojsIntegrationRestApi.description');
+    }
+
+    /**
+     * @see Plugin::isSitePlugin()
+     */
+    function isSitePlugin()
+    {
+        return true;
     }
 
     /**
@@ -101,15 +110,10 @@ class RestApiGatewayPlugin extends GatewayPlugin
     {
 
 
-
-       // $this->request = $request;
+        // $this->request = $request;
         // Put and post requests are also routed here. Testing that by:
         //$postVariableArray= $this->getPOSTPayloadVariable('afshinpayloadvariable');
-   //     var_dump($request);
-//exit;
-        $userEmail = $this->getParameter('userEmail');
-        //  echo json_encode(['userId'=>$userId]);
-        //echo json_encode($request);
+        //     var_dump($request);
 
 
         if (!$this->getEnabled()) {
@@ -124,12 +128,18 @@ class RestApiGatewayPlugin extends GatewayPlugin
                 case 'test': // Basic test
                     $response = array(
                         "message" => "GET response",
-                        "version" => "1.0"
+                        "version" => $this->APIVersion
                     );
                     $this->sendJsonResponse($response);
                     break;
                 case 'journals':
-                    $response =$this->getUserJournals($userEmail, $request);
+                    $response = $this->getJournals();
+                    // possible extension  get journals by email of a author. Currently, it returns all jounals
+                    // sample:
+                    //$userEmail = $this->getParameter('userEmail');
+                    // echo json_encode(['userId'=>$userId]);
+                    //$response = $this->getUserJournals($userEmail);
+
                     $this->sendJsonResponse($response);
                     break;
 
@@ -143,7 +153,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($restCallType === "POST") {
             $response = array(
                 "message" => "POST response",
-                "version" => "1.0"
+                "version" => $this->APIVersion
             );
             $this->sendJsonResponse($response);
         }
@@ -152,7 +162,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($restCallType === "PUT") {
             $response = array(
                 "message" => "PUT response",
-                "version" => "1.0"
+                "version" => $this->APIVersion
             );
             $this->sendJsonResponse($response);
         }
@@ -160,7 +170,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($restCallType === "DELETE") {
             $response = array(
                 "message" => "DELETE response",
-                "version" => "1.0"
+                "version" => $this->APIVersion
             );
             $this->sendJsonResponse($response);
         }
@@ -233,31 +243,57 @@ class RestApiGatewayPlugin extends GatewayPlugin
     /**
      * Display an error message and exit
      * @param $errorMessage
+     * @return string
      */
     public function sendErrorResponse($errorMessage)
     {
         header("HTTP/1.0 500 Internal Server Error");
         http_response_code(500);
         if ($errorMessage != null) echo $errorMessage . PHP_EOL;
-        echo "internal server error";
-        exit;
+        $response = [
+
+            "error" => "internal server error",
+            "errorMessage" => $errorMessage,
+            "code" => "500"
+        ];
+        echo json_encode($response);
+        return;
     }
 
-    private function getUserJournals($userEmail,$request)
+    private function getJournals()
     {
         /** Journal $journal */
-        $journal =& $request->getJournal();
+        //$journal =& $request->getJournal();
+        $journalArray = [];
+        $journalDao = DAORegistry::getDAO('JournalDAO');
+        /* @var $journalDao JournalDAO */
+        $journals = $journalDao->getAll();
+        $journalsCount = $journals->getCount();
+        $journal = null;
+        if ($journalsCount === 1) {
+            // Return the unique journal.
+            $journal = $journals->next();
+            $journals[] = $journal;
+        } else {
+            $journals = $journals->toAssociativeArray();
+        }
+        foreach ($journals as $journal) {
+            $journalArray[] = [
+                'id' => $journal->getId(),
+                'name' => $journal->getLocalizedName(),
+                'contactEmail' => $journal->_data['contactEmail'],
+                'contactName' => $journal->_data['contactName'],
+                //'autherInfo'=> $journal->_data['authorInformation'],
+                'path' => $journal->getPath(),
+                'description' => $journal->getLocalizedDescription(),
+            ];
+        }
+
         if (!isset($journal)) $this->sendErrorResponse("no journal is available");
-        $issueDao =& DAORegistry::getDAO('IssueDAO');
-        $journalArray= [
-                                'id' => $journal->getId(),
-								'name' => $journal->getLocalizedName(),
-								'path' => $journal->getPath(),
-								'description' => $journal->getLocalizedDescription(),
-        ];
+
         $response = array(
-            "journal" => $journalArray,
-            "version" => "1.0"
+            "journals" => $journalArray,
+            "version" => $this->APIVersion
         );
         return $response;
     }

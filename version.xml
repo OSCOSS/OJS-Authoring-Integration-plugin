@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE version SYSTEM "../../../lib/pkp/dtd/pluginVersion.dtd">
+
 <!--
   * plugins/generic/ojsIntegrationRestApi/version.xml
   * Plugin version information.
   -->
+
 <version>
-    <application>ojsIntegrationRestApi</application>
-    <type>plugins.generic</type>
-    <release>1.0.0.0</release>
-    <date>2016-06-15</date>
-    <lazy-load>1</lazy-load>
-    <class>IntegrationApiPlugin</class>
+<application>ojsIntegrationRestApi</application>
+<type>plugins.generic</type>
+<release>1.0.0.0</release>
+<date>2016-06-15</date>
+<lazy-load>1</lazy-load>
+<sitewide>1</sitewide>
+<class>IntegrationApiPlugin</class>
 </version>

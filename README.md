@@ -5,13 +5,14 @@ Bonn University - GESIS Institute
 #OJSIntegrationRestAPIplugin
 Rest API Plugin for OJS to work with external web based authoring and text editing systems
 
-###Use case : FidusWriter
-Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) while
-the the code is written as open as possible for any software that can deploy Rest API to integrate with OJS.
 
 Github source code of the plugin:
 https://github.com/OSCOSS/OJSIntegrationRestAPIplugin
 
+
+####Use case : FidusWriter
+Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) while
+the the code is written as open as possible for any software that can deploy Rest API to integrate with OJS.
 
 ##Installation:
 #####1.First step

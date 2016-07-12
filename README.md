@@ -3,7 +3,7 @@ Bonn University - GESIS Institute
 
 
 #OJSIntegrationRestAPIplugin
-Rest API Plugin for OJS to work with external web based authoring and text editing systems
+Rest API Plugin for OJS to work with external web based authoring and text editing and publishing systems
 
 
 Github source code of the plugin:
@@ -24,8 +24,13 @@ To have its latest version please check out the master branch.
 Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder of OJS.
 Create the folder if it does not exist.
 
+
+Then, run the upgrade script to register the plugin with the system by running:
+php tools/upgrade.php upgrade
 #####3.To Activate:
- Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" in the routs below:
+Enable the plugin via the interface:
+
+Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" in the routs below:
 
  in OJS 3.0 :
  setting > website > plugins

@@ -9,6 +9,13 @@
 import('lib.pkp.classes.plugins.GatewayPlugin');
 import('lib.pkp.classes.context.Context');
 import('classes.journal.Journal');
+import('lib.pkp.classes.workflow.WorkflowStageDAO');
+import('classes.user.UserDAO');
+import('classes.user.User');
+import('classes.security.RoleDAO');
+import('lib.pkp.classes.security.Role');
+import('lib.pkp.classes.security.UserGroupAssignment');
+import('lib.pkp.classes.security.AuthSourceDAO');
 
 class RestApiGatewayPlugin extends GatewayPlugin
 {
@@ -18,12 +25,15 @@ class RestApiGatewayPlugin extends GatewayPlugin
     public $parentPluginName;
     /** string API version */
     private $APIVersion;
+    /** string */
+    private $defaultLocale;
 
     public function RestApiGatewayPlugin($parentPluginName)
     {
         parent::GatewayPlugin();
         $this->parentPluginName = $parentPluginName;
         $this->APIVersion = "1.0";
+        $this->defaultLocale = AppLocale::getLocale();
     }
 
     /**
@@ -120,63 +130,96 @@ class RestApiGatewayPlugin extends GatewayPlugin
             return false;
         }
 
-        $restCallType = $this->getRESTRequestType();
-        $operator = array_shift($args);
+        try {
+            $restCallType = $this->getRESTRequestType();
+            $operator = array_shift($args);
 
-        if ($restCallType === "GET") {
-            switch ($operator) {
-                case 'test': // Basic test
-                    $response = array(
-                        "message" => "GET response",
-                        "version" => $this->APIVersion
-                    );
-                    $this->sendJsonResponse($response);
-                    break;
-                case 'journals':
-                    $response = $this->getJournals();
-                    // possible extension  get journals by email of a author. Currently, it returns all jounals
-                    // sample:
-                    //$userEmail = $this->getParameter('userEmail');
-                    // echo json_encode(['userId'=>$userId]);
-                    //$response = $this->getUserJournals($userEmail);
+            if ($restCallType === "GET") {
+                switch ($operator) {
+                    case 'test': // Basic test
+                        $response = array(
+                            "message" => "GET response",
+                            "version" => $this->APIVersion
+                        );
+                        $this->sendJsonResponse($response);
+                        break;
+                    case 'journals':
+                        $response = $this->getJournals();
+                        // possible extension  get journals by email of a author. Currently, it returns all jounals
+                        // sample:
+                        //$userEmail = $this->getParameter('userEmail');
+                        // echo json_encode(['userId'=>$userId]);
+                        //$response = $this->getUserJournals($userEmail);
 
-                    $this->sendJsonResponse($response);
-                    break;
+                        $this->sendJsonResponse($response);
+                        break;
 
-                default:
-                    $error = " Not a valid request";
-                    $this->sendErrorResponse($error);
+                    default:
+                        $error = " Not a valid request";
+                        $this->sendErrorResponse($error);
+                }
+
             }
 
+            if ($restCallType === "POST") {
+
+                switch ($operator) {
+                    case 'test': // Basic test
+                        $response = array(
+                            "message" => "POST test response",
+                            "version" => $this->APIVersion
+                        );
+                        $this->sendJsonResponse($response);
+
+                        break;
+                    //todo:check why submissions are not listed in my journal as submitted papers
+                    case 'articles':
+                        $resultArray = $this->saveArticleWithAuthor();
+                        $response = array(
+                            "submission_id" => $resultArray["submissionId"],
+                            "journal_id" => $resultArray["journalId"],
+                            "user_Id" => $resultArray["userId"],
+                            "version" => $this->APIVersion
+                        );
+                        $this->sendJsonResponse($response);
+                        break;
+                    //  case 'authors':
+                    //     $id = $this->saveAuthor();
+                    //      $response = array(
+                    //        "authorId" => "$id",
+                    //         "version" => $this->APIVersion
+                    //       );
+                    //      $this->sendJsonResponse($response);
+                    //     break;
+
+                    default:
+                        $error = " Not a valid request";
+                        $this->sendErrorResponse($error);
+                }
+            }
+
+
+            if ($restCallType === "PUT") {
+                $response = array(
+                    "message" => "PUT response",
+                    "version" => $this->APIVersion
+                );
+                $this->sendJsonResponse($response);
+            }
+
+            if ($restCallType === "DELETE") {
+                $response = array(
+                    "message" => "DELETE response",
+                    "version" => $this->APIVersion
+                );
+                $this->sendJsonResponse($response);
+            }
+
+            return true;
+        } catch (Exception $e) {
+            $this->sendErrorResponse($e->getMessage());
+            return true;
         }
-
-        if ($restCallType === "POST") {
-            $response = array(
-                "message" => "POST response",
-                "version" => $this->APIVersion
-            );
-            $this->sendJsonResponse($response);
-        }
-
-
-        if ($restCallType === "PUT") {
-            $response = array(
-                "message" => "PUT response",
-                "version" => $this->APIVersion
-            );
-            $this->sendJsonResponse($response);
-        }
-
-        if ($restCallType === "DELETE") {
-            $response = array(
-                "message" => "DELETE response",
-                "version" => $this->APIVersion
-            );
-            $this->sendJsonResponse($response);
-        }
-
-
-        return true;
     }
 
 
@@ -249,7 +292,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
     {
         header("HTTP/1.0 500 Internal Server Error");
         http_response_code(500);
-        if ($errorMessage != null) echo $errorMessage . PHP_EOL;
         $response = [
 
             "error" => "internal server error",
@@ -260,37 +302,31 @@ class RestApiGatewayPlugin extends GatewayPlugin
         return;
     }
 
+    /**
+     * @return array
+     */
     private function getJournals()
     {
-        /** Journal $journal */
-        //$journal =& $request->getJournal();
         $journalArray = [];
         $journalDao = DAORegistry::getDAO('JournalDAO');
         /* @var $journalDao JournalDAO */
-        $journals = $journalDao->getAll();
-        $journalsCount = $journals->getCount();
+        $journalsObject = $journalDao->getAll();
+        //$journalsCount = $journalsObject->getCount();
+        /** Journal $journal */
         $journal = null;
-        if ($journalsCount === 1) {
-            // Return the unique journal.
-            $journal = $journals->next();
-            $journals[] = $journal;
-        } else {
-            $journals = $journals->toAssociativeArray();
-        }
+        $journals = $journalsObject->toAssociativeArray();
         foreach ($journals as $journal) {
             $journalArray[] = [
                 'id' => $journal->getId(),
                 'name' => $journal->getLocalizedName(),
-                'contactEmail' => $journal->_data['contactEmail'],
-                'contactName' => $journal->_data['contactName'],
-                //'autherInfo'=> $journal->_data['authorInformation'],
-                'path' => $journal->getPath(),
+                'contact_email' => $journal->_data['contactEmail'],
+                'contact_name' => $journal->_data['contactName'],
+                'url_relative_path' => $journal->getPath(),
                 'description' => $journal->getLocalizedDescription(),
             ];
         }
 
-        if (!isset($journal)) $this->sendErrorResponse("no journal is available");
-
+        if (!isset($journal)) $this->sendErrorResponse("No journal is available");
         $response = array(
             "journals" => $journalArray,
             "version" => $this->APIVersion
@@ -298,6 +334,229 @@ class RestApiGatewayPlugin extends GatewayPlugin
         return $response;
     }
 
+    /**
+     * @param Submission $submission
+     * @return Submission
+     */
+    private function setArticleVariablesFromPOSTPayload($submission)
+    {
+        $contextId = $this->getPOSTPayloadVariable("journal_id");
+        $filename = $this->getPOSTPayloadVariable("file_name");
+        $articleUrl = $this->getPOSTPayloadVariable("article_url");
+        $title = $this->getPOSTPayloadVariable("title");
+
+        /** Submission */
+        $submission->setContextId($contextId);
+        $submission->setDateSubmitted(Core::getCurrentDate());
+        //todo: setData is not working and it was not recognized in the subittion_setting table, ask alec for it
+        $submission->setData("article_url", $articleUrl);
+        $submission->setFileName($articleUrl, $this->defaultLocale);
+        $submission->setLocale($this->defaultLocale);
+        $submission->setTitle($title, $this->defaultLocale);
+        $submission->setFileName($filename, $this->defaultLocale);
+        $submission->setTitle($title, $this->defaultLocale);
+        return $submission;
+    }
+
+    /**
+     * @return array
+     */
+    private function saveArticleWithAuthor()
+    {
+        $submissionDao = Application::getSubmissionDAO();
+        $submission = $submissionDao->newDataObject();
+        $submission->setStatus(STATUS_QUEUED);
+        $submission->setSubmissionProgress(0);
+        $this->setArticleVariablesFromPOSTPayload($submission);
+
+        $workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
+        //  $submission->setStageId(WorkflowStageDAO::getIdFromPath($node->getAttribute('stage')));
+        $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);  // WORKFLOW_STAGE_ID_SUBMISSION value is equal to 1 in our first journal test
+        //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
+
+
+        $journalId = $this->getPOSTPayloadVariable("journalId");
+
+        // Sections are different parts of a journal,
+        // Later we can extend the api to select which section to submit, the default section is articles.
+        // https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementJournalSections.html
+        $sectionDao = Application::getSectionDAO();
+        $section = $sectionDao->getByTitle("Articles", $journalId, $this->defaultLocale);
+        $sectionId = $section->getId();
+        $submission->setData("sectionId", $sectionId);
+        // Insert the submission
+        $submissionId = $submissionDao->insertObject($submission);
+
+        $emailAddress = $this->getPOSTPayloadVariable("email");
+        $firstName = $this->getPOSTPayloadVariable("first_name");
+        $lastName = $this->getPOSTPayloadVariable("last_name");
+        $user = $this->getUser($emailAddress, $journalId, $firstName, $lastName);
+
+        //check if author exist in db
+        $authorId = $this->saveAuthor($submissionId, $journalId, $emailAddress, $firstName, $lastName);
+
+        // Assign the user author to the stage
+        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+        $stageAssignmentDao->build($submissionId, $this->getAuthorUserGroupId($journalId), $user->getId());
+
+        $resultArray = array(
+            "journalId" => $journalId,
+            "submissionId" => $submissionId,
+            "userId" => $user->getId(),
+        );
+        return $resultArray;
+    }
+
+    /**
+     * @param $articleId
+     * @param $journalId
+     * @param $emailAddress
+     * @param $firstName
+     * @param $lastName
+     * @return null
+     */
+    private function saveAuthor($articleId, $journalId, $emailAddress, $firstName, $lastName)
+    {
+        // Set user to initial author
+
+        $authorDao = DAORegistry::getDAO('AuthorDAO');
+        /** @var Author $author */
+        $author = $authorDao->newDataObject();
+        $author->setFirstName($firstName);
+        $author->setMiddleName("");
+        $author->setLastName($lastName);
+        $author->setAffiliation($this->getPOSTPayloadVariable("affiliation"), $this->defaultLocale);
+        $author->setCountry($this->getPOSTPayloadVariable("country"));
+        $author->setEmail($emailAddress);
+        $author->setUrl($this->getPOSTPayloadVariable("author_url"));
+        $author->setBiography($this->getPOSTPayloadVariable("biography"), $this->defaultLocale);
+        $author->setPrimaryContact(1);
+        $author->setIncludeInBrowse(1);
+
+        $authorUserGroup = $this->getAuthorUserGroupId($journalId);
+        $author->setUserGroupId($authorUserGroup);
+        $author->setSubmissionId($articleId);
+
+        $authorId = $authorDao->insertObject($author);
+        $author->setId($authorId);
+        return $authorId;
+    }
+
+
+    /**
+     * @param $journalId
+     * @return mixed
+     */
+    private function getAuthorUserGroupId($journalId)
+    {
+        $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+        /** /classes/security/UserGroup  */
+        $authorUserGroup = $userGroupDao->getDefaultByRoleId($journalId, ROLE_ID_AUTHOR);
+        return $authorUserGroup->getId();
+    }
+
+    /**
+     * @param $emailAddress
+     * @param $journalId
+     * @param $firstName
+     * @param $lastName
+     * @return PKPUser|User
+     */
+    private function getUser($emailAddress, $journalId, $firstName, $lastName)
+    {
+        /** @var UserDAO $userDao */
+        $userDao = DAORegistry::getDAO('UserDAO');
+        /** @var RoleDAO $roleDao */
+        $roleDao = DAORegistry::getDAO('RoleDAO');
+        if ($userDao->userExistsByEmail($emailAddress)) {
+
+            // User already has account, check if enrolled as author in journal
+            /** @var User */
+            $user = $userDao->getUserByEmail($emailAddress);
+            $userId = $user->getId();
+
+            if (!$roleDao->userHasRole($journalId, $userId, ROLE_ID_AUTHOR)) {
+                //todo:
+                // ask alec and christop and philip about a legitimate logic here,
+                // maybe if a user is already registered, we better not to change his role type
+
+                // User not enrolled as author enroll as author
+
+                /** @var Role $role */
+                //$role = new Role();
+                //todo: ask alec why this gives error
+                // $role->setJournalId($journalId);
+                //$role->setUserId($userId);
+
+                // $role->setData("context_id",$journalId);
+                //$role->setData("user_id",$journalId);
+                //$role->setRoleId(ROLE_ID_AUTHOR);
+                // $roleDao->insertRole($role);
+            }
+        } else {
+            // User does not have an account. Create one and enroll as author.
+            $username = Validation::suggestUsername($firstName, $lastName);
+            $password = Validation::generatePassword();
+
+            $user = $userDao->newDataObject();
+            $user->setUsername($username);
+            $user->setPassword(Validation::encryptCredentials($username, $password));
+            $user->setFirstName($firstName);
+            $user->setLastName($lastName);
+            $user->setEmail($emailAddress);
+            $user->setDateRegistered(Core::getCurrentDate());
+
+            //this is to be added for authentication plugin in future, so that we will list it in auth_source table
+            $authDao = DAORegistry::getDAO('AuthSourceDAO');
+            $defaultAuth = $authDao->getDefaultPlugin();
+            $user->setAuthId($defaultAuth->authId);
+
+            $userDao->insertObject($user);
+            $userId = $user->getId();
+
+            //$role = new Role();
+            //$role->setJournalId($journalId);
+            //$role->setUserId($userId);
+            //$role->setRoleId(ROLE_ID_AUTHOR);
+            //$roleDao->insertRole($role);
+        }
+        return $user;
+    }
+
+    // todo:
+    private function updateArticle($authorId, $journalId)
+    {
+
+        $authorDao = DAORegistry::getDAO('AuthorDAO');
+        /** @var UserDAO $userDao */
+        $userDao = DAORegistry::getDAO('UserDAO');
+        $author = $authorDao->getById($authorId);
+
+        if ($author !== null && $userDao->userExistsByEmail($author->getEmail())) {
+
+            return null;
+        } else {
+            //user has no
+            return null;
+        }
+    }
+
+    /**
+     * @param User $user
+     * @return int
+     * @throws Exception
+     */
+    private function updateUser(User $user)
+    {
+        $userId = $user->getId();
+        if ($userId === null) {
+            throw new Exception("Error: Problem in updating User data");
+        }
+        /** @var UserDAO $userDao */
+        $userDao = DAORegistry::getDAO('UserDAO');
+        $userDao->updateObject($user);
+        return $userId;
+    }
 }
 
 ?>

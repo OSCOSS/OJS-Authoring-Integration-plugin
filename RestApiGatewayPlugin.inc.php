@@ -375,7 +375,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
 
 
-        $journalId = $this->getPOSTPayloadVariable("journalId");
+        $journalId = $this->getPOSTPayloadVariable("journal_id");
 
         // Sections are different parts of a journal,
         // Later we can extend the api to select which section to submit, the default section is articles.

@@ -349,11 +349,14 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $submission->setContextId($contextId);
         $submission->setDateSubmitted(Core::getCurrentDate());
         //todo: setData is not working and it was not recognized in the subittion_setting table, ask alec for it
-        $submission->setData("article_url", $articleUrl);
-        $submission->setFileName($articleUrl, $this->defaultLocale);
         $submission->setLocale($this->defaultLocale);
         $submission->setTitle($title, $this->defaultLocale);
-        $submission->setFileName($filename, $this->defaultLocale);
+        $submission->setFileName($articleUrl, $this->defaultLocale);
+
+        // setting data as article_url did not work,
+        // instead we use the file_name to store it and the title will keep it.
+        //$submission->setData("article_url", $articleUrl);
+        // $submission->setFileName($filename, $this->defaultLocale);
         $submission->setTitle($title, $this->defaultLocale);
         return $submission;
     }
@@ -382,7 +385,11 @@ class RestApiGatewayPlugin extends GatewayPlugin
         // https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementJournalSections.html
         $sectionDao = Application::getSectionDAO();
         $section = $sectionDao->getByTitle("Articles", $journalId, $this->defaultLocale);
-        $sectionId = $section->getId();
+        if ($section !== NULL) {
+            $sectionId = $section->getId();
+        } else {
+            $sectionId = 1;
+        }
         $submission->setData("sectionId", $sectionId);
         // Insert the submission
         $submissionId = $submissionDao->insertObject($submission);
@@ -452,6 +459,9 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
         /** /classes/security/UserGroup  */
         $authorUserGroup = $userGroupDao->getDefaultByRoleId($journalId, ROLE_ID_AUTHOR);
+        if($authorUserGroup === FALSE){
+            return ROLE_ID_AUTHOR;
+        }
         return $authorUserGroup->getId();
     }
 

@@ -155,7 +155,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         break;
 
                     default:
-                        $error = " Not a valid request";
+                        $error = " OJS Integration REST Plugin: Not a valid GET request";
                         $this->sendErrorResponse($error);
                 }
 
@@ -353,7 +353,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
         $submission->setLocale($this->defaultLocale);
         $submission->setSubject($title, $this->defaultLocale);
-        $submission->setFileName($filename, $this->defaultLocale);
+        //$submission->setFileName($filename, $this->defaultLocale);
         $submission->setTitle($linkToOJS, $this->defaultLocale);
         $submission->setCleanTitle($linkToOJS, $this->defaultLocale);
         // setting data as article_url did not work,

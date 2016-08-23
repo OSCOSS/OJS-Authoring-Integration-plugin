@@ -104,7 +104,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * parent plugin will take care of loading this one when needed)
      * @return boolean
      */
-    public function getEnabled()
+    public function getEnabled() 
     {
         return $this->getIntegrationApiPlugin()->getEnabled();
     }
@@ -349,15 +349,16 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $submission->setContextId($contextId);
         $submission->setDateSubmitted(Core::getCurrentDate());
         //todo: setData is not working and it was not recognized in the subittion_setting table, ask alec for it
-        $submission->setLocale($this->defaultLocale);
-        $submission->setTitle($title, $this->defaultLocale);
-        $submission->setFileName($articleUrl, $this->defaultLocale);
+        $linkToOJS = '<a href="'.$articleUrl.'">Click here to open in Fidus Writer: '.$title. '</a>';
 
+        $submission->setLocale($this->defaultLocale);
+        $submission->setSubject($title, $this->defaultLocale);
+        $submission->setFileName($filename, $this->defaultLocale);
+        $submission->setTitle($linkToOJS, $this->defaultLocale);
+        $submission->setCleanTitle($linkToOJS, $this->defaultLocale);
         // setting data as article_url did not work,
         // instead we use the file_name to store it and the title will keep it.
         //$submission->setData("article_url", $articleUrl);
-        // $submission->setFileName($filename, $this->defaultLocale);
-        $submission->setTitle($title, $this->defaultLocale);
         return $submission;
     }
 

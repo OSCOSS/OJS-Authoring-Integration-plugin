@@ -162,7 +162,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
             }
 
             if ($restCallType === "POST") {
-
                 switch ($operator) {
                     case 'test': // Basic test
                         $response = array(
@@ -229,7 +228,9 @@ class RestApiGatewayPlugin extends GatewayPlugin
      */
     private function getPOSTPayloadVariable($varName)
     {
-
+        error_log("logging:". implode($_SERVER, "," ));
+        //todo: find the cors_token from header , check of is in $_SERVER or other places.
+        //   error_log("loggingCRF:". $_SERVER["csrf_token"],0);  //csrfToken
         if (isset($_POST[$varName])) {
             return $_POST[$varName];
         }
@@ -348,7 +349,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
         /** Submission */
         $submission->setContextId($contextId);
         $submission->setDateSubmitted(Core::getCurrentDate());
-        //todo: setData is not working and it was not recognized in the subittion_setting table, ask alec for it
         $linkToOJS = '<a href="'.$articleUrl.'">Click here to open in Fidus Writer: '.$title. '</a>';
 
         $submission->setLocale($this->defaultLocale);

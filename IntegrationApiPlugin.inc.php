@@ -11,7 +11,7 @@ import('lib.pkp.classes.plugins.GenericPlugin');
 class IntegrationApiPlugin extends GenericPlugin
 {
 
-
+    private $fwURL;
     /**
      * Get the name of the settings file to be installed on new context
      * creation.
@@ -69,6 +69,8 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     function register($category, $path)
     {
+        $this->fwURL = 'http://localhost:8100';
+
         if (parent::register($category, $path)) {
             if ($this->getEnabled()) {
                 HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
@@ -94,13 +96,17 @@ class IntegrationApiPlugin extends GenericPlugin
         $row =& $args[1];
 
         error_log("loggingRegister:" . $reviewAssignment, 0);
-
-
         $email = $this->getUserEmail($row[1]);
         error_log("email: " . $email, 0);
         error_log("submitionID" . $row[0], 0);
-        //then send the email address of reviewer to FW. FW must give review aceess to this article with the submisttion id
-        //todo: use $this->sendRequest()
+        
+        $dataArray = ['email' => $email,
+        'doc_submit_id' =>$row[0] ];
+
+        $url = $this->fwURL.'/reviewer' ;
+        //then send the email address of reviewer to FW.
+        // FW must give review aceess to this article with the submission id
+        $this->sendPostRequest($url, $dataArray );
         return false;
 
     }
@@ -118,9 +124,19 @@ class IntegrationApiPlugin extends GenericPlugin
 
         error_log("loggingRemoveReviewer:" . $reviewAssignment, 0);
         error_log($reviewId, 0);
-        error_log("reviewer email: ". $this->getUserEmailByReviewID($reviewId));
-        error_log("SubmissionId: ". $this->getSubmissionIdByReviewID($reviewId));
-        //then send the email address of reviewer to FW. FW must give review aceess to this article with the submisttion id
+        $email = $this->getUserEmailByReviewID($reviewId);
+        $submissionId = $this->getSubmissionIdByReviewID($reviewId);
+
+        error_log("reviewer email: " . $email);
+        error_log("SubmissionId: " . $submissionId);
+
+
+        $dataArray = ['email' => $email,
+            'doc_submit_id' =>$submissionId];
+        //Then send the email address of reviewer to FW.
+        // FW must give review aceess to this article with the submission id
+        $url = $this->fwURL.'/reviewer' ;
+        $this->sendPutRequest($url,$dataArray );
         return false;
     }
 
@@ -185,23 +201,61 @@ class IntegrationApiPlugin extends GenericPlugin
         return $submissionId;
     }
 
-    // todo: update it
-    private function sendRequest(){
-        $url = 'http://server.com/path';
-        $data = array('key1' => 'value1', 'key2' => 'value2');
-
-        // use key 'http' even if you send the request to https://...
+    /**
+     * @param $requestType
+     * @param $url
+     * @param $data_array
+     * @return string
+     */
+    private function sendRequest($requestType, $url, $data_array)
+    {
         $options = array(
             'http' => array(
-                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method'  => 'POST',
-                'content' => http_build_query($data)
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method' => $requestType,
+                'content' => http_build_query($data_array)
             )
         );
-        $context  = stream_context_create($options);
+        $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
-        if ($result === FALSE) { /* Handle error */ }
-
-        var_dump($result);
+        if ($result === FALSE) { /* Handle error */
+            echo $result;
+        }
+        return $result;
     }
+
+
+    /**
+     * @param $url
+     * @param $data_array
+     * @return string
+     */
+    private function sendPutRequest($url, $data_array)
+    {
+        $result = $this->sendRequest('PUT',$url, $data_array );
+        return $result;
+    }
+
+    /**
+     * @param $url
+     * @param $data_array
+     * @return string
+     */
+    private function sendPostRequest($url, $data_array)
+    {
+       $result = $this->sendRequest('POST',$url, $data_array );
+        return $result;
+    }
+
+    /**
+     * @return User/Null
+     */
+    private function getUserFromSession()
+    {
+        $sessionManager = SessionManager::getManager();
+        $userSession = $sessionManager->getUserSession();
+        $user = $userSession->getUser();
+        return $user;
+    }
+
 }

@@ -25,8 +25,16 @@ class RestApiGatewayPlugin extends GatewayPlugin
     public $parentPluginName;
     /** string API version */
     private $APIVersion;
-    /** string */
+    /** @var string */
     private $defaultLocale;
+    /** @var string FW URL address */
+    private $fwURL;
+    /** @var string shared key to send request to FW */
+    private $sharedKey;
+    /**  @var string current plugin URL */
+    private $pluginURL;
+    /** @var string */
+    private $OJSURL;
 
     public function RestApiGatewayPlugin($parentPluginName)
     {
@@ -34,6 +42,10 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $this->parentPluginName = $parentPluginName;
         $this->APIVersion = "1.0";
         $this->defaultLocale = AppLocale::getLocale();
+        $this->fwURL = 'http://localhost:8100';
+        $this->OJSURL = 'http://localhost:8100';//todo:get it from session
+        $this->pluginURL = $this->OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
+        $this->sharedKey = "d5PW586jwefjn!3fv";
     }
 
     /**
@@ -104,7 +116,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * parent plugin will take care of loading this one when needed)
      * @return boolean
      */
-    public function getEnabled() 
+    public function getEnabled()
     {
         return $this->getIntegrationApiPlugin()->getEnabled();
     }
@@ -144,6 +156,8 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         $this->sendJsonResponse($response);
                         break;
                     case 'journals':
+                        //sample address:
+                        // http://localhost:8000/index.php/index/gateway/plugin/RestApiGatewayPlugin/journals
                         $response = $this->getJournals();
                         // possible extension  get journals by email of a author. Currently, it returns all jounals
                         // sample:
@@ -153,7 +167,18 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
                         $this->sendJsonResponse($response);
                         break;
-
+                    case 'documentReview':
+                        $redirect_url = $args['article_url'];
+                        $status = $this->loginFW();
+                        if (!$status) {
+                            $response = array(
+                                "message" => "error recognizing the reviewer.",
+                                "version" => $this->APIVersion
+                            );
+                            $this->sendJsonResponse($response);
+                        }
+                        $this->redirect($redirect_url);
+                        break;
                     default:
                         $error = " OJS Integration REST Plugin: Not a valid GET request";
                         $this->sendErrorResponse($error);
@@ -161,64 +186,66 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
             }
 
-            if ($restCallType === "POST") {
-                switch ($operator) {
-                    case 'test': // Basic test
-                        $response = array(
-                            "message" => "POST test response",
-                            "version" => $this->APIVersion
-                        );
-                        $this->sendJsonResponse($response);
+                if ($restCallType === "POST") {
+                    switch ($operator) {
+                        case 'test': // Basic test
+                            $response = array(
+                                "message" => "POST test response",
+                                "version" => $this->APIVersion
+                            );
+                            $this->sendJsonResponse($response);
 
-                        break;
-                    //todo:check why submissions are not listed in my journal as submitted papers
-                    case 'articles':
-                        $resultArray = $this->saveArticleWithAuthor();
-                        $response = array(
-                            "submission_id" => $resultArray["submissionId"],
-                            "journal_id" => $resultArray["journalId"],
-                            "user_Id" => $resultArray["userId"],
-                            "version" => $this->APIVersion
-                        );
-                        $this->sendJsonResponse($response);
-                        break;
-                    //  case 'authors':
-                    //     $id = $this->saveAuthor();
-                    //      $response = array(
-                    //        "authorId" => "$id",
-                    //         "version" => $this->APIVersion
-                    //       );
-                    //      $this->sendJsonResponse($response);
-                    //     break;
+                            break;
+                        //todo:check why submissions are not listed in my journal as submitted papers
+                        case 'articles':
+                            $resultArray = $this->saveArticleWithAuthor();
+                            $response = array(
+                                "submission_id" => $resultArray["submissionId"],
+                                "journal_id" => $resultArray["journalId"],
+                                "user_Id" => $resultArray["userId"],
+                                "version" => $this->APIVersion
+                            );
+                            $this->sendJsonResponse($response);
+                            break;
+                        //  case 'authors':
+                        //     $id = $this->saveAuthor();
+                        //      $response = array(
+                        //        "authorId" => "$id",
+                        //         "version" => $this->APIVersion
+                        //       );
+                        //      $this->sendJsonResponse($response);
+                        //     break;
 
-                    default:
-                        $error = " Not a valid request";
-                        $this->sendErrorResponse($error);
+                        default:
+                            $error = " Not a valid request";
+                            $this->sendErrorResponse($error);
+                    }
                 }
+
+
+                if ($restCallType === "PUT") {
+                    $response = array(
+                        "message" => "PUT response",
+                        "version" => $this->APIVersion
+                    );
+                    $this->sendJsonResponse($response);
+                }
+
+                if ($restCallType === "DELETE") {
+                    $response = array(
+                        "message" => "DELETE response",
+                        "version" => $this->APIVersion
+                    );
+                    $this->sendJsonResponse($response);
+                }
+
+                return true;
             }
-
-
-            if ($restCallType === "PUT") {
-                $response = array(
-                    "message" => "PUT response",
-                    "version" => $this->APIVersion
-                );
-                $this->sendJsonResponse($response);
+        catch
+            (Exception $e) {
+                $this->sendErrorResponse($e->getMessage());
+                return true;
             }
-
-            if ($restCallType === "DELETE") {
-                $response = array(
-                    "message" => "DELETE response",
-                    "version" => $this->APIVersion
-                );
-                $this->sendJsonResponse($response);
-            }
-
-            return true;
-        } catch (Exception $e) {
-            $this->sendErrorResponse($e->getMessage());
-            return true;
-        }
     }
 
 
@@ -228,7 +255,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
      */
     private function getPOSTPayloadVariable($varName)
     {
-        error_log("logging:". implode($_SERVER, "," ));
+        error_log("logging:" . implode($_SERVER, ","));
         //todo: find the cors_token from header , check of is in $_SERVER or other places.
         //   error_log("loggingCRF:". $_SERVER["csrf_token"],0);  //csrfToken
         if (isset($_POST[$varName])) {
@@ -349,7 +376,9 @@ class RestApiGatewayPlugin extends GatewayPlugin
         /** Submission */
         $submission->setContextId($contextId);
         $submission->setDateSubmitted(Core::getCurrentDate());
-        $linkToOJS = '<a href="'.$articleUrl.'">Click here to open in Fidus Writer: '.$title. '</a>';
+
+        $single_sign_on_Url = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
+        $linkToOJS = '<a href="' . $single_sign_on_Url . '">Click here to open in Fidus Writer: ' . $title . '</a>';
 
         $submission->setLocale($this->defaultLocale);
         $submission->setSubject($title, $this->defaultLocale);
@@ -460,7 +489,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
         /** /classes/security/UserGroup  */
         $authorUserGroup = $userGroupDao->getDefaultByRoleId($journalId, ROLE_ID_AUTHOR);
-        if($authorUserGroup === FALSE){
+        if ($authorUserGroup === FALSE) {
             return ROLE_ID_AUTHOR;
         }
         return $authorUserGroup->getId();
@@ -568,6 +597,74 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $userDao->updateObject($user);
         return $userId;
     }
+
+    /**
+     * @param $url
+     * @param int $statusCode
+     */
+    private function redirect($url, $statusCode = 303)
+    {
+        header('Location: ' . $url, true, $statusCode);
+        die();
+    }
+
+    /**
+     * @return string
+     */
+    private function loginFW()
+    {
+        $sharedKey = $this->sharedKey;
+        $email = $this->getLoggedInUserEmailFromSession();
+        if ($email == Null) {
+            echo "Error: user is not logged in"; //todo make error handling
+        }
+        $url = $this->fwURL . '/documentReview';
+        $data = array('key' => $sharedKey,
+            'email' => $email,
+            'doc' => 'Document url');
+        return $this->sendPostRequest($url, $data);
+    }
+
+    /**
+     * @param $url
+     * @param $data_array
+     * @return string
+     */
+    private function sendPostRequest($url, $data_array)
+    {
+        $options = array(
+            'http' => array(
+                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method' => 'POST',
+                'content' => http_build_query($data_array)
+            )
+        );
+        $context = stream_context_create($options);
+        $result = file_get_contents($url, false, $context);
+        if ($result === FALSE) { /* Handle error */
+            echo $result;
+        }
+        return $result;
+    }
+
+
+    /**
+     * @return User/Null
+     */
+    private function getLoggedInUserEmailFromSession()
+    {
+        $email = Null;
+        $sessionManager = SessionManager::getManager();
+        $userSession = $sessionManager->getUserSession();
+        /**
+         * @var User
+         */
+        $user = $userSession->getUser();
+        if (isset($user)) {
+            $email = $user->getEmail();
+        }
+        return $email;
+    }
+
 }
 
-?>

@@ -16,6 +16,7 @@ import('classes.security.RoleDAO');
 import('lib.pkp.classes.security.Role');
 import('lib.pkp.classes.security.UserGroupAssignment');
 import('lib.pkp.classes.security.AuthSourceDAO');
+import('lib.pkp.classes.submission.SubmissionDAO');
 
 class RestApiGatewayPlugin extends GatewayPlugin
 {
@@ -42,8 +43,9 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $this->parentPluginName = $parentPluginName;
         $this->APIVersion = "1.0";
         $this->defaultLocale = AppLocale::getLocale();
+        //todo: this should be get from user in plugin installation time
         $this->fwURL = 'http://localhost:8100';
-        $this->OJSURL = 'http://localhost:8100';//todo:get it from session
+        $this->OJSURL = 'http://localhost:8000';//todo:get it from session
         $this->pluginURL = $this->OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
         $this->sharedKey = "d5PW586jwefjn!3fv";
     }
@@ -168,7 +170,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         $this->sendJsonResponse($response);
                         break;
                     case 'documentReview':
-                        $redirect_url = $args['article_url'];
+                        $redirect_url = $_GET['article_url'];
                         $status = $this->loginFW();
                         if (!$status) {
                             $response = array(
@@ -186,66 +188,64 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
             }
 
-                if ($restCallType === "POST") {
-                    switch ($operator) {
-                        case 'test': // Basic test
-                            $response = array(
-                                "message" => "POST test response",
-                                "version" => $this->APIVersion
-                            );
-                            $this->sendJsonResponse($response);
+            if ($restCallType === "POST") {
+                switch ($operator) {
+                    case 'test': // Basic test
+                        $response = array(
+                            "message" => "POST test response",
+                            "version" => $this->APIVersion
+                        );
+                        $this->sendJsonResponse($response);
 
-                            break;
-                        //todo:check why submissions are not listed in my journal as submitted papers
-                        case 'articles':
-                            $resultArray = $this->saveArticleWithAuthor();
-                            $response = array(
-                                "submission_id" => $resultArray["submissionId"],
-                                "journal_id" => $resultArray["journalId"],
-                                "user_Id" => $resultArray["userId"],
-                                "version" => $this->APIVersion
-                            );
-                            $this->sendJsonResponse($response);
-                            break;
-                        //  case 'authors':
-                        //     $id = $this->saveAuthor();
-                        //      $response = array(
-                        //        "authorId" => "$id",
-                        //         "version" => $this->APIVersion
-                        //       );
-                        //      $this->sendJsonResponse($response);
-                        //     break;
+                        break;
+                    case 'articles':
+                        $resultArray = $this->saveArticleWithAuthor();
+                        $response = array(
+                            "submission_id" => $resultArray["submissionId"],
+                            "journal_id" => $resultArray["journalId"],
+                            "user_Id" => $resultArray["userId"],
+                            "version" => $this->APIVersion
+                        );
+                        $this->sendJsonResponse($response);
+                        break;
+                    //  case 'authors':
+                    //     $id = $this->saveAuthor();
+                    //      $response = array(
+                    //        "authorId" => "$id",
+                    //         "version" => $this->APIVersion
+                    //       );
+                    //      $this->sendJsonResponse($response);
+                    //     break;
 
-                        default:
-                            $error = " Not a valid request";
-                            $this->sendErrorResponse($error);
-                    }
+                    default:
+                        $error = " Not a valid request";
+                        $this->sendErrorResponse($error);
                 }
-
-
-                if ($restCallType === "PUT") {
-                    $response = array(
-                        "message" => "PUT response",
-                        "version" => $this->APIVersion
-                    );
-                    $this->sendJsonResponse($response);
-                }
-
-                if ($restCallType === "DELETE") {
-                    $response = array(
-                        "message" => "DELETE response",
-                        "version" => $this->APIVersion
-                    );
-                    $this->sendJsonResponse($response);
-                }
-
-                return true;
             }
-        catch
-            (Exception $e) {
-                $this->sendErrorResponse($e->getMessage());
-                return true;
+
+
+            if ($restCallType === "PUT") {
+                $response = array(
+                    "message" => "PUT response",
+                    "version" => $this->APIVersion
+                );
+                $this->sendJsonResponse($response);
             }
+
+            if ($restCallType === "DELETE") {
+                $response = array(
+                    "message" => "DELETE response",
+                    "version" => $this->APIVersion
+                );
+                $this->sendJsonResponse($response);
+            }
+
+            return true;
+        } catch
+        (Exception $e) {
+            $this->sendErrorResponse($e->getMessage());
+            return true;
+        }
     }
 
 
@@ -618,10 +618,10 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($email == Null) {
             echo "Error: user is not logged in"; //todo make error handling
         }
-        $url = $this->fwURL . '/documentReview';
+        $url = $this->fwURL . '/document/documentReview/';
         $data = array('key' => $sharedKey,
-            'email' => $email,
-            'doc' => 'Document url');
+            'email' => $email);
+        //print_r($status); die();
         return $this->sendPostRequest($url, $data);
     }
 

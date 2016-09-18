@@ -1,5 +1,6 @@
 <?php
 import('lib.pkp.classes.plugins.GenericPlugin');
+import('lib.pkp.classes.submission.SubmissionDAO');
 
 /**
  * Project OSCOSS
@@ -12,6 +13,7 @@ class IntegrationApiPlugin extends GenericPlugin
 {
 
     private $fwURL;
+
     /**
      * Get the name of the settings file to be installed on new context
      * creation.
@@ -69,7 +71,7 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     function register($category, $path)
     {
-        $this->fwURL = 'http://localhost:8100';
+
 
         if (parent::register($category, $path)) {
             if ($this->getEnabled()) {
@@ -95,20 +97,21 @@ class IntegrationApiPlugin extends GenericPlugin
         $reviewAssignment =& $args[0];
         $row =& $args[1];
 
-        error_log("loggingRegister:" . $reviewAssignment, 0);
+        //error_log("loggingRegister:" . $reviewAssignment, 0);
         $email = $this->getUserEmail($row[1]);
-        error_log("email: " . $email, 0);
-        error_log("submitionID" . $row[0], 0);
-        
-        $dataArray = ['email' => $email,
-        'doc_submit_id' =>$row[0] ];
+        //error_log("email: " . $email, 0);
+        //error_log("submitionID" . $row[0], 0);
 
-        $url = $this->fwURL.'/reviewer' ;
+        $documentId = $this->getDocumentIdFromSubmissonId($row[0]);
+        error_log("documentId ->>>>>>>>>>>>>" . $documentId, 0);
+        $dataArray = ['email' => $email,
+            'doc_id' => $documentId];
+        $this->fwURL = 'http://localhost:8100';
+        $url = $this->fwURL . '/document/reviewer/';
         //then send the email address of reviewer to FW.
         // FW must give review aceess to this article with the submission id
-        $this->sendPostRequest($url, $dataArray );
+        $this->sendPostRequest($url, $dataArray);
         return false;
-
     }
 
     /**
@@ -126,17 +129,18 @@ class IntegrationApiPlugin extends GenericPlugin
         error_log($reviewId, 0);
         $email = $this->getUserEmailByReviewID($reviewId);
         $submissionId = $this->getSubmissionIdByReviewID($reviewId);
+        $documentId = $this->getDocumentIdFromSubmissonId($submissionId);
 
         error_log("reviewer email: " . $email);
         error_log("SubmissionId: " . $submissionId);
-
-
+        error_log("documentId: " . $documentId);
         $dataArray = ['email' => $email,
-            'doc_submit_id' =>$submissionId];
+            'doc_id' => $documentId];
         //Then send the email address of reviewer to FW.
         // FW must give review aceess to this article with the submission id
-        $url = $this->fwURL.'/reviewer' ;
-        $this->sendPutRequest($url,$dataArray );
+        $this->fwURL = 'http://localhost:8100';
+        $url = $this->fwURL . '/document/reviewer/';
+        $this->sendPutRequest($url, $dataArray);
         return false;
     }
 
@@ -232,7 +236,12 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     private function sendPutRequest($url, $data_array)
     {
-        $result = $this->sendRequest('PUT',$url, $data_array );
+        error_log("sending put request: ", 0);
+        error_log($url, 0);
+        foreach ($data_array as $a => $b) {
+            error_log($a . '--->' . $b, 0);
+        }
+        $result = $this->sendRequest('PUT', $url, $data_array);
         return $result;
     }
 
@@ -243,7 +252,12 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     private function sendPostRequest($url, $data_array)
     {
-       $result = $this->sendRequest('POST',$url, $data_array );
+        error_log("sending post request: ", 0);
+        error_log($url, 0);
+        foreach ($data_array as $a => $b) {
+            error_log($a . '--->' . $b, 0);
+        }
+        $result = $this->sendRequest('POST', $url, $data_array);
         return $result;
     }
 
@@ -256,6 +270,23 @@ class IntegrationApiPlugin extends GenericPlugin
         $userSession = $sessionManager->getUserSession();
         $user = $userSession->getUser();
         return $user;
+    }
+
+    /**
+     * @param $submissionId
+     * @return mixed
+     */
+    private function getDocumentIdFromSubmissonId($submissionId)
+    {
+        $submissionDao = Application::getSubmissionDAO();
+        /** @var Submission */
+        $submission = $submissionDao->getById($submissionId);
+        $submissionTitle = $submission->getTitle(AppLocale::getLocale());
+        $matches = explode('"', $submissionTitle);
+
+        $matches = explode('document/', $matches[1]);
+        $documentId = $matches[1];
+        return $documentId;
     }
 
 }

@@ -183,7 +183,9 @@ class IntegrationApiPlugin extends GenericPlugin
     {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
-        return $userDao->getUserName($userId);
+        /** @var User $user  */
+        $user = $userDao->getById($userId);
+        return $user->getUsername($userId);
     }
 
     /**

@@ -645,6 +645,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
     <input type="hidden" name="key" value="' . $data_array['key'] . '">
     <input type="hidden" name="email" value="' . $data_array['email'] . '">
     <input type="hidden" name="doc_id" value="' . $data_array['doc_id'] . '">
+    <input type="hidden" name="user_name" value="' . $data_array['user_name'] . '">
     <button type="submit" name="submit_param" value="submit_value" class="link-button">
     Jumping to the article ...
     </button>

@@ -96,16 +96,16 @@ class IntegrationApiPlugin extends GenericPlugin
 
         $reviewAssignment =& $args[0];
         $row =& $args[1];
-
         //error_log("loggingRegister:" . $reviewAssignment, 0);
         $email = $this->getUserEmail($row[1]);
         //error_log("email: " . $email, 0);
         //error_log("submitionID" . $row[0], 0);
-
+        $userName = $this->getUserName($row[1]);
         $documentId = $this->getDocumentIdFromSubmissonId($row[0]);
-        error_log("documentId ->>>>>>>>>>>>>" . $documentId, 0);
+        //error_log("documentId ->>>>>>>>>>>>>" . $documentId, 0);
         $dataArray = ['email' => $email,
-            'doc_id' => $documentId];
+            'doc_id' => $documentId,
+            'user_name' => $userName];
         $this->fwURL = 'http://localhost:8100';
         $url = $this->fwURL . '/document/reviewer/';
         //then send the email address of reviewer to FW.
@@ -124,23 +124,23 @@ class IntegrationApiPlugin extends GenericPlugin
 
         $reviewAssignment =& $args[0];
         $reviewId =& $args[1];
-
-        error_log("loggingRemoveReviewer:" . $reviewAssignment, 0);
-        error_log($reviewId, 0);
+        #error_log("loggingRemoveReviewer:" . $reviewAssignment, 0);
+        #error_log($reviewId, 0);
         $email = $this->getUserEmailByReviewID($reviewId);
         $submissionId = $this->getSubmissionIdByReviewID($reviewId);
         $documentId = $this->getDocumentIdFromSubmissonId($submissionId);
-
-        error_log("reviewer email: " . $email);
-        error_log("SubmissionId: " . $submissionId);
-        error_log("documentId: " . $documentId);
+        $userName = $this->getUserNameByReviewID($reviewId);
+        //error_log("reviewer email: " . $email);
+        //error_log("SubmissionId: " . $submissionId);
+        //error_log("documentId: " . $documentId);
         $dataArray = ['email' => $email,
-            'doc_id' => $documentId];
+            'doc_id' => $documentId,
+            'user_name' => $userName];
         //Then send the email address of reviewer to FW.
         // FW must give review aceess to this article with the submission id
         $this->fwURL = 'http://localhost:8100';
-        $url = $this->fwURL . '/document/reviewer/';
-        $this->sendPutRequest($url, $dataArray);
+        $url = $this->fwURL . '/document/delReviewer/';
+        $this->sendPostRequest($url, $dataArray);
         return false;
     }
 
@@ -176,6 +176,17 @@ class IntegrationApiPlugin extends GenericPlugin
     }
 
     /**
+     * @param $userId
+     * @return string
+     */
+    private function getUserName($userId)
+    {
+        /** @var UserDAO $userDao */
+        $userDao = DAORegistry::getDAO('UserDAO');
+        return $userDao->getUserName($userId);
+    }
+
+    /**
      * @param $reviewId
      * @return mixed
      */
@@ -190,13 +201,28 @@ class IntegrationApiPlugin extends GenericPlugin
         return $userDao->getUserEmail($userId);
     }
 
+
+    /**
+     * @param $reviewId
+     * @return mixed
+     */
+    private function getUserNameByReviewID($reviewId)
+    {
+        $userDao = DAORegistry::getDAO('UserDAO');
+        /** @var ReviewAssignmentDAO $RADao */
+        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        $reviewAssignment = $RADao->getById($reviewId);
+        /** @var ReviewAssignment $reviewAssignment */
+        $userId = $reviewAssignment->getReviewerId();
+        return $this->getUserName($userId);
+    }
+
     /**
      * @param $reviewId
      * @return int
      */
     private function getSubmissionIdByReviewID($reviewId)
     {
-        $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignment = $RADao->getById($reviewId);

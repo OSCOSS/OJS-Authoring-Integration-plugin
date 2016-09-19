@@ -171,15 +171,17 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         break;
                     case 'documentReview':
                         $redirect_url = $_GET['article_url'];
-                        $status = $this->loginFW();
-                        if (!$status) {
+                        $documentId = $this->getDocumentIdFromURL($redirect_url);
+                        $status = $this->loginFW($documentId);
+                        #echo $status;
+                        /*if (!$status) {
                             $response = array(
                                 "message" => "error recognizing the reviewer.",
                                 "version" => $this->APIVersion
                             );
                             $this->sendJsonResponse($response);
-                        }
-                        $this->redirect($redirect_url);
+                        }*/
+                        //$this->redirect($redirect_url);
                         break;
                     default:
                         $error = " OJS Integration REST Plugin: Not a valid GET request";
@@ -378,7 +380,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $submission->setDateSubmitted(Core::getCurrentDate());
 
         $single_sign_on_Url = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
-        $linkToOJS = '<a href="' . $single_sign_on_Url . '">Click here to open in Fidus Writer: ' . $title . '</a>';
+        $linkToOJS = '<a href="' . $single_sign_on_Url . '">Open in Editor: ' . $title . '</a>';
 
         $submission->setLocale($this->defaultLocale);
         $submission->setSubject($title, $this->defaultLocale);
@@ -609,9 +611,10 @@ class RestApiGatewayPlugin extends GatewayPlugin
     }
 
     /**
+     * @param $documentId
      * @return string
      */
-    private function loginFW()
+    private function loginFW($documentId)
     {
         $sharedKey = $this->sharedKey;
         $email = $this->getLoggedInUserEmailFromSession();
@@ -619,10 +622,12 @@ class RestApiGatewayPlugin extends GatewayPlugin
             echo "Error: user is not logged in"; //todo make error handling
         }
         $url = $this->fwURL . '/document/documentReview/';
+        $userName = $this->getLoggedInUserNameFromSession();
         $data = array('key' => $sharedKey,
-            'email' => $email);
-        //print_r($status); die();
-        return $this->sendPostRequest($url, $data);
+            'email' => $email,
+            'doc_id' => $documentId,
+            'user_name' => $userName);
+        return $this->sendPostRequestAndJump($url, $data);
     }
 
     /**
@@ -630,21 +635,23 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * @param $data_array
      * @return string
      */
-    private function sendPostRequest($url, $data_array)
+    private function sendPostRequestAndJump($url, $data_array)
     {
-        $options = array(
-            'http' => array(
-                'header' => "Content-type: application/x-www-form-urlencoded\r\n",
-                'method' => 'POST',
-                'content' => http_build_query($data_array)
-            )
-        );
-        $context = stream_context_create($options);
-        $result = file_get_contents($url, false, $context);
-        if ($result === FALSE) { /* Handle error */
-            echo $result;
-        }
-        return $result;
+
+        $result = '
+<html>
+ <body onload="document.frm1.submit()">
+   <form method="post" action="' . $url . '" name = "frm1" class="inline">
+    <input type="hidden" name="key" value="' . $data_array['key'] . '">
+    <input type="hidden" name="email" value="' . $data_array['email'] . '">
+    <input type="hidden" name="doc_id" value="' . $data_array['doc_id'] . '">
+    <button type="submit" name="submit_param" value="submit_value" class="link-button">
+    Jumping to the article ...
+    </button>
+  </form>
+ </body >
+</html >';
+        echo $result;
     }
 
 
@@ -664,6 +671,35 @@ class RestApiGatewayPlugin extends GatewayPlugin
             $email = $user->getEmail();
         }
         return $email;
+    }
+
+    /**
+     * @return User/Null
+     */
+    private function getLoggedInUserNameFromSession()
+    {
+        $email = Null;
+        $sessionManager = SessionManager::getManager();
+        $userSession = $sessionManager->getUserSession();
+        /**
+         * @var User
+         */
+        $user = $userSession->getUser();
+        if (isset($user)) {
+            $userName = $user->getUsername();
+        }
+        return $userName;
+    }
+
+    /**
+     * @param $articleURL
+     * @return mixed
+     */
+    private function getDocumentIdFromURL($articleURL)
+    {
+        $matches = explode('/document/', $articleURL);
+        $documentId = $matches[1];
+        return $documentId;
     }
 
 }

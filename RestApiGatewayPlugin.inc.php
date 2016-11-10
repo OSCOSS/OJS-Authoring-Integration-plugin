@@ -39,7 +39,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
     public function RestApiGatewayPlugin($parentPluginName)
     {
-        parent::GatewayPlugin();
+        parent::__construct();
         $this->parentPluginName = $parentPluginName;
         $this->APIVersion = "1.0";
         $this->defaultLocale = AppLocale::getLocale();

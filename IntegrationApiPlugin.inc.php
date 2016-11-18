@@ -12,7 +12,8 @@ import('lib.pkp.classes.submission.SubmissionDAO');
 class IntegrationApiPlugin extends GenericPlugin
 {
 
-    private $fwURL;
+    /** @var string authoring tool URL address */
+    private $atURL;
 
     /**
      * Get the name of the settings file to be installed on new context
@@ -106,10 +107,10 @@ class IntegrationApiPlugin extends GenericPlugin
         $dataArray = ['email' => $email,
             'doc_id' => $documentId,
             'user_name' => $userName];
-        $this->fwURL = 'http://localhost:8100';
-        $url = $this->fwURL . '/document/reviewer/';
-        //then send the email address of reviewer to FW.
-        // FW must give review aceess to this article with the submission id
+        $this->atURL = 'http://localhost:8100';
+        $url = $this->atURL . '/document/reviewer/';
+        //then send the email address of reviewer to AT.
+        // Authoring tool must give review access to this article with the submission id
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -136,10 +137,10 @@ class IntegrationApiPlugin extends GenericPlugin
         $dataArray = ['email' => $email,
             'doc_id' => $documentId,
             'user_name' => $userName];
-        //Then send the email address of reviewer to FW.
-        // FW must give review aceess to this article with the submission id
-        $this->fwURL = 'http://localhost:8100';
-        $url = $this->fwURL . '/document/delReviewer/';
+        //Then send the email address of reviewer to authoring tool.
+        // AT must give review aceess to this article with the submission id
+        $this->atURL = 'http://localhost:8100';
+        $url = $this->atURL . '/document/delReviewer/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }

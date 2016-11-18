@@ -28,9 +28,9 @@ class RestApiGatewayPlugin extends GatewayPlugin
     private $APIVersion;
     /** @var string */
     private $defaultLocale;
-    /** @var string FW URL address */
-    private $fwURL;
-    /** @var string shared key to send request to FW */
+    /** @var string authoring tool URL address */
+    private $atURL;
+    /** @var string shared key to send request to AT */
     private $sharedKey;
     /**  @var string current plugin URL */
     private $pluginURL;
@@ -44,7 +44,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $this->APIVersion = "1.0";
         $this->defaultLocale = AppLocale::getLocale();
         //todo: this should be get from user in plugin installation time
-        $this->fwURL = 'http://localhost:8100';
+        $this->atURL = 'http://localhost:8100';
         $this->OJSURL = 'http://localhost:8000';//todo:get it from session
         $this->pluginURL = $this->OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
         $this->sharedKey = "d5PW586jwefjn!3fv";
@@ -172,7 +172,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                     case 'documentReview':
                         $redirect_url = $_GET['article_url'];
                         $documentId = $this->getDocumentIdFromURL($redirect_url);
-                        $status = $this->loginFW($documentId);
+                        $status = $this->loginAuthoringTool($documentId);
                         #echo $status;
                         /*if (!$status) {
                             $response = array(
@@ -202,6 +202,16 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         break;
                     case 'articles':
                         $resultArray = $this->saveArticleWithAuthor();
+                        $response = array(
+                            "submission_id" => $resultArray["submissionId"],
+                            "journal_id" => $resultArray["journalId"],
+                            "user_Id" => $resultArray["userId"],
+                            "version" => $this->APIVersion
+                        );
+                        $this->sendJsonResponse($response);
+                        break;
+                    case 'articleReviews':
+                        $resultArray = $this->saveArticleReview();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
                             "journal_id" => $resultArray["journalId"],
@@ -394,6 +404,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
     }
 
     /**
+     * Takes an article submission from authors
      * @return array
      */
     private function saveArticleWithAuthor()
@@ -444,6 +455,65 @@ class RestApiGatewayPlugin extends GatewayPlugin
             "userId" => $user->getId(),
         );
         return $resultArray;
+    }
+
+    /**
+     * Takes an article review submission from reviewers
+     * @return array
+     */
+    private function saveArticleReview()
+    {
+        $submissionDao = Application::getSubmissionDAO();
+        $submission = $submissionDao->newDataObject();
+
+        echo($submission->getStatus());
+
+
+        #$submission->setStatus(STATUS_QUEUED);
+        #$submission->setSubmissionProgress(0);
+        #$this->setArticleVariablesFromPOSTPayload($submission);
+
+        $workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
+        //  $submission->setStageId(WorkflowStageDAO::getIdFromPath($node->getAttribute('stage')));
+        $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);  // WORKFLOW_STAGE_ID_SUBMISSION value is equal to 1 in our first journal test
+        //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
+
+
+        $journalId = $this->getPOSTPayloadVariable("journal_id");
+
+        // Sections are different parts of a journal,
+        // Later we can extend the api to select which section to submit, the default section is articles.
+        // https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementJournalSections.html
+        $sectionDao = Application::getSectionDAO();
+        $section = $sectionDao->getByTitle("Articles", $journalId, $this->defaultLocale);
+        if ($section !== NULL) {
+            $sectionId = $section->getId();
+        } else {
+            $sectionId = 1;
+        }
+        
+        
+        
+        #######$submission->setData("sectionId", $sectionId);
+        // Insert the submission
+        $submissionId = $submissionDao->insertObject($submission);
+
+        $emailAddress = $this->getPOSTPayloadVariable("email");
+        $firstName = $this->getPOSTPayloadVariable("first_name");
+        $lastName = $this->getPOSTPayloadVariable("last_name");
+        $user = $this->getUser($emailAddress, $journalId, $firstName, $lastName); #todo:get user only by email address
+
+        // Assign the user author to the stage
+        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+        $stageAssignmentDao->build($submissionId, $this->getAuthorUserGroupId($journalId), $user->getId());
+
+        $resultArray = array(
+            "journalId" => $journalId,
+            "submissionId" => $submissionId,
+            "userId" => $user->getId(),
+        );
+        return $resultArray;
+
     }
 
     /**
@@ -614,14 +684,14 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * @param $documentId
      * @return string
      */
-    private function loginFW($documentId)
+    private function loginAuthoringTool($documentId)
     {
         $sharedKey = $this->sharedKey;
         $email = $this->getLoggedInUserEmailFromSession();
         if ($email == Null) {
             echo "Error: user is not logged in"; //todo make error handling
         }
-        $url = $this->fwURL . '/document/documentReview/';
+        $url = $this->atURL . '/document/documentReview/';
         $userName = $this->getLoggedInUserNameFromSession();
         $data = array('key' => $sharedKey,
             'email' => $email,

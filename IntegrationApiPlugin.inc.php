@@ -100,7 +100,7 @@ class IntegrationApiPlugin extends GenericPlugin
         //error_log("loggingRegister:" . $reviewAssignment, 0);
         $email = $this->getUserEmail($row[1]);
         //error_log("email: " . $email, 0);
-        //error_log("submitionID" . $row[0], 0);
+        //array_keys(submitionID" . $row[0], 0);
         $userName = $this->getUserName($row[1]);
         $documentId = $this->getDocumentIdFromSubmissonId($row[0]);
         //error_log("documentId ->>>>>>>>>>>>>" . $documentId, 0);
@@ -265,11 +265,12 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     private function sendPutRequest($url, $data_array)
     {
+        /**
         error_log("sending put request: ", 0);
         error_log($url, 0);
         foreach ($data_array as $a => $b) {
             error_log($a . '--->' . $b, 0);
-        }
+        }*/
         $result = $this->sendRequest('PUT', $url, $data_array);
         return $result;
     }
@@ -281,11 +282,13 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     private function sendPostRequest($url, $data_array)
     {
+        /**
         error_log("sending post request: ", 0);
         error_log($url, 0);
         foreach ($data_array as $a => $b) {
             error_log($a . '--->' . $b, 0);
         }
+         * */
         $result = $this->sendRequest('POST', $url, $data_array);
         return $result;
     }

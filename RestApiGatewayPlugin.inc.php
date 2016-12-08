@@ -170,6 +170,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         $this->sendJsonResponse($response);
                         break;
                     case 'documentReview':
+                        // Here I convert Local command in form of GET from browser to Remote Host Command by Server in for of POST
                         $redirect_url = $_GET['article_url'];
                         $documentId = $this->getDocumentIdFromURL($redirect_url);
                         $status = $this->loginAuthoringTool($documentId);
@@ -201,6 +202,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
                         break;
                     case 'articles':
+                        // in case author submits and article
                         $resultArray = $this->saveArticleWithAuthor();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
@@ -211,6 +213,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         $this->sendJsonResponse($response);
                         break;
                     case 'articleReviews':
+                        // in case a reviewer submit the article review
                         $resultArray = $this->saveArticleReview();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
@@ -440,7 +443,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $emailAddress = $this->getPOSTPayloadVariable("email");
         $firstName = $this->getPOSTPayloadVariable("first_name");
         $lastName = $this->getPOSTPayloadVariable("last_name");
-        $user = $this->getUser($emailAddress, $journalId, $firstName, $lastName);
+        $user = $this->getUserForAuthoring($emailAddress, $journalId, $firstName, $lastName);
 
         //check if author exist in db
         $authorId = $this->saveAuthor($submissionId, $journalId, $emailAddress, $firstName, $lastName);
@@ -460,61 +463,52 @@ class RestApiGatewayPlugin extends GatewayPlugin
     /**
      * Takes an article review submission from reviewers
      * @return array
+     * @throws Exception
      */
     private function saveArticleReview()
     {
-        $submissionDao = Application::getSubmissionDAO();
-        $submission = $submissionDao->newDataObject();
-
-        echo($submission->getStatus());
-
-
-        #$submission->setStatus(STATUS_QUEUED);
-        #$submission->setSubmissionProgress(0);
-        #$this->setArticleVariablesFromPOSTPayload($submission);
-
-        $workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
-        //  $submission->setStageId(WorkflowStageDAO::getIdFromPath($node->getAttribute('stage')));
-        $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);  // WORKFLOW_STAGE_ID_SUBMISSION value is equal to 1 in our first journal test
-        //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
-
-
-        $journalId = $this->getPOSTPayloadVariable("journal_id");
-
-        // Sections are different parts of a journal,
-        // Later we can extend the api to select which section to submit, the default section is articles.
-        // https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementJournalSections.html
-        $sectionDao = Application::getSectionDAO();
-        $section = $sectionDao->getByTitle("Articles", $journalId, $this->defaultLocale);
-        if ($section !== NULL) {
-            $sectionId = $section->getId();
-        } else {
-            $sectionId = 1;
+        $journalId = $this->getPOSTPayloadVariable("journal_id"); //same as $contextId
+        if ($journalId === NULL || $journalId === "") {
+            throw new Exception("journal_id is not set in the header");
         }
-        
-        
-        
-        #######$submission->setData("sectionId", $sectionId);
-        // Insert the submission
-        $submissionId = $submissionDao->insertObject($submission);
-
+        $submissionId = $this->getPOSTPayloadVariable("submission_id");
+        if ($submissionId === NULL || $submissionId === "") {
+            throw new Exception("submissionId is not set in the header");
+        }
+        $submissionDao = Application::getSubmissionDAO();
+        $submission = $submissionDao->getById($submissionId);
+        $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);  // WORKFLOW_STAGE_ID_INTERNAL_REVIEW value is equal to 2 from interface iPKPApplicationInfoProvider
         $emailAddress = $this->getPOSTPayloadVariable("email");
-        $firstName = $this->getPOSTPayloadVariable("first_name");
-        $lastName = $this->getPOSTPayloadVariable("last_name");
-        $user = $this->getUser($emailAddress, $journalId, $firstName, $lastName); #todo:get user only by email address
+        /** @var User */
+        $user = $this->getUserForReviewing($emailAddress, $journalId);
+        $userId = $user->getId();
 
-        // Assign the user author to the stage
-        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-        $stageAssignmentDao->build($submissionId, $this->getAuthorUserGroupId($journalId), $user->getId());
+        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        $reviewAssignmentsArray = $reviewAssignmentDao->getBySubmissionId($submission->getId());
 
+        $reviewAssignment = NULL;
+        foreach ($reviewAssignmentsArray as $reviewAssignmentObject) {
+            /** @var $reviewAssignmentObject  ReviewAssignment */
+            if($reviewAssignmentObject->getReviewerId() === $userId) {
+                $reviewAssignment = $reviewAssignmentObject;
+            }
+        }
+       # error_log(print_r( $reviewAssignmentsArray));
+
+       if ($reviewAssignment === NULL) {
+            throw new Exception('user with email address ' . $emailAddress . ' has not right to review this article');
+        }
+
+        
         $resultArray = array(
             "journalId" => $journalId,
             "submissionId" => $submissionId,
-            "userId" => $user->getId(),
+            "userId" => $userId,
         );
         return $resultArray;
 
     }
+
 
     /**
      * @param $articleId
@@ -574,7 +568,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * @param $lastName
      * @return PKPUser|User
      */
-    private function getUser($emailAddress, $journalId, $firstName, $lastName)
+    private function getUserForAuthoring($emailAddress, $journalId, $firstName, $lastName)
     {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
@@ -588,22 +582,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
             $userId = $user->getId();
 
             if (!$roleDao->userHasRole($journalId, $userId, ROLE_ID_AUTHOR)) {
-                //todo:
-                // ask alec and christop and philip about a legitimate logic here,
-                // maybe if a user is already registered, we better not to change his role type
-
-                // User not enrolled as author enroll as author
-
-                /** @var Role $role */
-                //$role = new Role();
-                //todo: ask alec why this gives error
-                // $role->setJournalId($journalId);
-                //$role->setUserId($userId);
-
-                // $role->setData("context_id",$journalId);
-                //$role->setData("user_id",$journalId);
-                //$role->setRoleId(ROLE_ID_AUTHOR);
-                // $roleDao->insertRole($role);
+                //throw  new exception("Error: The author has already another role other than authoring in the same Journal");
             }
         } else {
             // User does not have an account. Create one and enroll as author.
@@ -634,6 +613,32 @@ class RestApiGatewayPlugin extends GatewayPlugin
         }
         return $user;
     }
+
+    /**
+     * @param $emailAddress
+     * @param $journalId
+     * @return PKPUser|User
+     * @throws Exception
+     * @internal param $firstName
+     * @internal param $lastName
+     */
+    private function getUserForReviewing($emailAddress, $journalId)
+    {
+        /** @var UserDAO $userDao */
+        $userDao = DAORegistry::getDAO('UserDAO');
+        /** @var RoleDAO $roleDao */
+        $roleDao = DAORegistry::getDAO('RoleDAO');
+        if ($userDao->userExistsByEmail($emailAddress)) {
+
+            // User already has account, check if enrolled as author in journal
+            /** @var User */
+            $user = $userDao->getUserByEmail($emailAddress);
+        }else{
+            $user = null;
+        }
+        return $user;
+    }
+
 
     // todo:
     private function updateArticle($authorId, $journalId)

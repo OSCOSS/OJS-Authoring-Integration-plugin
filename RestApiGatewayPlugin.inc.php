@@ -484,22 +484,35 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $userId = $user->getId();
 
         $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+
         $reviewAssignmentsArray = $reviewAssignmentDao->getBySubmissionId($submission->getId());
 
         $reviewAssignment = NULL;
         foreach ($reviewAssignmentsArray as $reviewAssignmentObject) {
             /** @var $reviewAssignmentObject  ReviewAssignment */
-            if($reviewAssignmentObject->getReviewerId() === $userId) {
+            if ($reviewAssignmentObject->getReviewerId() === $userId) {
                 $reviewAssignment = $reviewAssignmentObject;
             }
         }
-       # error_log(print_r( $reviewAssignmentsArray));
+        # error_log(print_r( $reviewAssignmentsArray));
 
-       if ($reviewAssignment === NULL) {
+        if ($reviewAssignment === NULL) {
             throw new Exception('user with email address ' . $emailAddress . ' has not right to review this article');
         }
 
-        
+
+        $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
+        /* @var $reviewerSubmissionDao ReviewerSubmissionDAO */
+        $reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewAssignment->getId());
+
+
+        $editorMessageCommentText = $this->getPOSTPayloadVariable("editor_message");
+        $editorAndAuthorMessageCommentText = $this->getPOSTPayloadVariable("message_editor_author");
+        $this->saveCommentForEditor($editorMessageCommentText, $reviewAssignment);
+        $this->saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment);
+
+
+        $this->updateReviewStepAndSaveSubmission($reviewerSubmission);
         $resultArray = array(
             "journalId" => $journalId,
             "submissionId" => $submissionId,
@@ -507,6 +520,26 @@ class RestApiGatewayPlugin extends GatewayPlugin
         );
         return $resultArray;
 
+    }
+
+    /**
+     * Set the review step of the submission to the given
+     * value if it is not already set to a higher value. Then
+     * update the given reviewer submission.
+     * @param $reviewerSubmission ReviewerSubmission
+     */
+    function updateReviewStepAndSaveSubmission(ReviewerSubmission &$reviewerSubmission)
+    {
+        //review step
+        $submissionCompleteStep = 3;
+        $nextStep = $submissionCompleteStep;
+        if ($reviewerSubmission->getStep() < $nextStep) {
+            $reviewerSubmission->setStep($nextStep);
+        }
+        // Save the reviewer submission.
+        $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
+        /* @var $reviewerSubmissionDao ReviewerSubmissionDAO */
+        $reviewerSubmissionDao->updateReviewerSubmission($reviewerSubmission);
     }
 
 
@@ -633,7 +666,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
             // User already has account, check if enrolled as author in journal
             /** @var User */
             $user = $userDao->getUserByEmail($emailAddress);
-        }else{
+        } else {
             $user = null;
         }
         return $user;
@@ -778,5 +811,58 @@ class RestApiGatewayPlugin extends GatewayPlugin
         return $documentId;
     }
 
+    /**
+     * @param $editorMessageCommentText
+     * @param $reviewAssignment
+     * @return bool
+     */
+    private function saveCommentForEditor($editorMessageCommentText, $reviewAssignment)
+    {
+        $hidden = true;
+        return $this->saveComment($editorMessageCommentText, $hidden, $reviewAssignment);
+    }
+
+    /**
+     * @param $editorAndAuthorMessageCommentText
+     * @param $reviewAssignment
+     * @return bool
+     */
+    private function saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment)
+    {
+        $hidden = false;
+        return $this->saveComment($editorAndAuthorMessageCommentText, $hidden, $reviewAssignment);
+    }
+
+    /**
+     * @param $commentText
+     * @param $hidden
+     * @param $reviewAssignment
+     * @return bool
+     */
+    private function saveComment($commentText, $hidden, $reviewAssignment)
+    {
+        if (strlen($commentText) === 0) {
+            return false;
+        }
+        // Create a comment with the review.
+        $submissionCommentDao = DAORegistry::getDAO('SubmissionCommentDAO');
+        $comment = $submissionCommentDao->newDataObject();
+        $comment->setCommentType(COMMENT_TYPE_PEER_REVIEW);
+        $comment->setRoleId(ROLE_ID_REVIEWER);
+        $comment->setAssocId($reviewAssignment->getId());
+        $comment->setSubmissionId($reviewAssignment->getSubmissionId());
+        $comment->setAuthorId($reviewAssignment->getReviewerId());
+        $comment->setComments($commentText);
+        $comment->setCommentTitle('');
+        $viewable = true;
+        if ($hidden === true) {
+            $viewable = false;
+        }
+        $comment->setViewable($viewable);
+        $comment->setDatePosted(Core::getCurrentDate());
+        // Persist.
+        $submissionCommentDao->insertObject($comment);
+        return true;
+    }
 }
 

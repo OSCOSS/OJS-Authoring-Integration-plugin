@@ -38,13 +38,13 @@
       <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="269">
-              <caret line="482" column="91" selection-start-line="482" selection-start-column="91" selection-end-line="482" selection-end-column="91" />
+            <state relative-caret-position="104">
+              <caret line="471" column="73" selection-start-line="471" selection-start-column="73" selection-end-line="471" selection-end-column="73" />
               <folding>
-                <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
-                <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
-                <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
-                <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
+                <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
+                <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
+                <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
+                <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
               </folding>
             </state>
           </provider>
@@ -262,7 +262,7 @@
       <workItem from="1479402503571" duration="5545000" />
       <workItem from="1481214607120" duration="1201000" />
       <workItem from="1481215877729" duration="4861000" />
-      <workItem from="1481231117473" duration="5699000" />
+      <workItem from="1481231117473" duration="5731000" />
     </task>
     <task id="LOCAL-00001" summary="plain structure,&#10;&#10;github.com/OSCOSS/OJSFWplugin/issues/1&#10;&#10;plug in can be seen in the list of plugins in &#10;Setting / Website / plugins&#10;">
       <created>1465832910988</created>
@@ -446,11 +446,18 @@
       <option name="project" value="LOCAL" />
       <updated>1481557009095</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="adding block comments, adding error handling">
+      <created>1481557464941</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1481557464941</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="76073000" />
+    <option name="totallyTimeSpent" value="76105000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="-56" y="-845" width="1280" height="722" extended-state="0" />
@@ -561,10 +568,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -638,10 +645,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -675,10 +682,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -847,13 +854,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="269">
-          <caret line="482" column="91" selection-start-line="482" selection-start-column="91" selection-end-line="482" selection-end-column="91" />
+        <state relative-caret-position="104">
+          <caret line="471" column="73" selection-start-line="471" selection-start-column="73" selection-end-line="471" selection-end-column="73" />
           <folding>
-            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
-            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
+            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
           </folding>
         </state>
       </provider>

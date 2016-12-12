@@ -469,12 +469,12 @@ class RestApiGatewayPlugin extends GatewayPlugin
     {
         $journalId = $this->getPOSTPayloadVariable("journal_id"); //same as $contextId
         if ($journalId === NULL || $journalId === "") {
-            throw new Exception("Error: journal_id is not set in the header");
+            throw new Exception("Error: journal_id is not set or is empty in the header");
         }
 
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
         if ($submissionId === NULL || $submissionId === "") {
-            throw new Exception("Error: submissionId is not set in the header");
+            throw new Exception("Error: submissionId is not set or is empty in the header");
         }
 
         $submissionDao = Application::getSubmissionDAO();

@@ -469,14 +469,17 @@ class RestApiGatewayPlugin extends GatewayPlugin
     {
         $journalId = $this->getPOSTPayloadVariable("journal_id"); //same as $contextId
         if ($journalId === NULL || $journalId === "") {
-            throw new Exception("journal_id is not set in the header");
+            throw new Exception("Error: journal_id is not set in the header");
         }
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
         if ($submissionId === NULL || $submissionId === "") {
-            throw new Exception("submissionId is not set in the header");
+            throw new Exception("Error: submissionId is not set in the header");
         }
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
+        if ($submission === NUll){
+            throw new Exception("Error: no submission with given submissionId exists");
+        }
         $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);  // WORKFLOW_STAGE_ID_INTERNAL_REVIEW value is equal to 2 from interface iPKPApplicationInfoProvider
         $emailAddress = $this->getPOSTPayloadVariable("email");
         /** @var User */
@@ -497,7 +500,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         # error_log(print_r( $reviewAssignmentsArray));
 
         if ($reviewAssignment === NULL) {
-            throw new Exception('user with email address ' . $emailAddress . ' has not right to review this article');
+            throw new Exception('Error: user with email address ' . $emailAddress . ' has not right to review this article');
         }
 
 
@@ -536,6 +539,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($reviewerSubmission->getStep() < $nextStep) {
             $reviewerSubmission->setStep($nextStep);
         }
+        $reviewerSubmission->setRecommendation("See Comments");
         // Save the reviewer submission.
         $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
         /* @var $reviewerSubmissionDao ReviewerSubmissionDAO */

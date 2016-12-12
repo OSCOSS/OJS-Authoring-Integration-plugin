@@ -38,13 +38,13 @@
       <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="508">
-              <caret line="883" column="0" selection-start-line="883" selection-start-column="0" selection-end-line="883" selection-end-column="0" />
+            <state relative-caret-position="269">
+              <caret line="482" column="91" selection-start-line="482" selection-start-column="91" selection-end-line="482" selection-end-column="91" />
               <folding>
-                <marker date="1481556992000" expanded="true" signature="26610:27197" placeholder="..." />
-                <marker date="1481556992000" expanded="true" signature="26650:27188" placeholder="..." />
-                <marker date="1481556992000" expanded="true" signature="26725:27178" placeholder="..." />
-                <marker date="1481556992000" expanded="true" signature="27123:27168" placeholder="..." />
+                <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
+                <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
+                <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
+                <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
               </folding>
             </state>
           </provider>
@@ -104,7 +104,8 @@
   </component>
   <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" interpreter_name="Remote PHP 5.4" />
   <component name="ProjectFrameBounds">
-    <option name="y" value="23" />
+    <option name="x" value="-56" />
+    <option name="y" value="-845" />
     <option name="width" value="1280" />
     <option name="height" value="722" />
   </component>
@@ -261,7 +262,7 @@
       <workItem from="1479402503571" duration="5545000" />
       <workItem from="1481214607120" duration="1201000" />
       <workItem from="1481215877729" duration="4861000" />
-      <workItem from="1481231117473" duration="5306000" />
+      <workItem from="1481231117473" duration="5699000" />
     </task>
     <task id="LOCAL-00001" summary="plain structure,&#10;&#10;github.com/OSCOSS/OJSFWplugin/issues/1&#10;&#10;plug in can be seen in the list of plugins in &#10;Setting / Website / plugins&#10;">
       <created>1465832910988</created>
@@ -438,14 +439,21 @@
       <option name="project" value="LOCAL" />
       <updated>1481552659570</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="adding block comments, adding error handling">
+      <created>1481557009095</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1481557009095</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="75680000" />
+    <option name="totallyTimeSpent" value="76073000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1280" height="722" extended-state="0" />
+    <frame x="-56" y="-845" width="1280" height="722" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -499,7 +507,8 @@
     <MESSAGE value="adding the review step. draft" />
     <MESSAGE value="adding the review step. complete" />
     <MESSAGE value="adding block comments" />
-    <option name="LAST_COMMIT_MESSAGE" value="adding block comments" />
+    <MESSAGE value="adding block comments, adding error handling" />
+    <option name="LAST_COMMIT_MESSAGE" value="adding block comments, adding error handling" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -552,10 +561,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481556992000" expanded="true" signature="26610:27197" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26650:27188" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26725:27178" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="27123:27168" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -629,10 +638,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481556992000" expanded="true" signature="26610:27197" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26650:27188" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26725:27178" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="27123:27168" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -666,10 +675,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481556992000" expanded="true" signature="26610:27197" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26650:27188" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26725:27178" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="27123:27168" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -838,13 +847,13 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="508">
-          <caret line="883" column="0" selection-start-line="883" selection-start-column="0" selection-end-line="883" selection-end-column="0" />
+        <state relative-caret-position="269">
+          <caret line="482" column="91" selection-start-line="482" selection-start-column="91" selection-end-line="482" selection-end-column="91" />
           <folding>
-            <marker date="1481556992000" expanded="true" signature="26610:27197" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26650:27188" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="26725:27178" placeholder="..." />
-            <marker date="1481556992000" expanded="true" signature="27123:27168" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26624:27211" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26664:27202" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="26739:27192" placeholder="..." />
+            <marker date="1481557454000" expanded="true" signature="27137:27182" placeholder="..." />
           </folding>
         </state>
       </provider>

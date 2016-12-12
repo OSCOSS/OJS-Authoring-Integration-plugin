@@ -480,7 +480,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
         if ($submission === NUll|| $submission === ""){
-            throw new Exception("Error: no submission with given submissionId exists");
+            throw new Exception("Error: no submission with given submissionId $submissionId exists");
         }
         $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);  // WORKFLOW_STAGE_ID_INTERNAL_REVIEW value is equal to 2 from interface iPKPApplicationInfoProvider
 

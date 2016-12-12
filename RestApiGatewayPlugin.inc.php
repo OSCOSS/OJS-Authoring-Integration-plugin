@@ -471,20 +471,32 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($journalId === NULL || $journalId === "") {
             throw new Exception("Error: journal_id is not set in the header");
         }
+
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
         if ($submissionId === NULL || $submissionId === "") {
             throw new Exception("Error: submissionId is not set in the header");
         }
+
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
-        if ($submission === NUll){
+        if ($submission === NUll|| $submission === ""){
             throw new Exception("Error: no submission with given submissionId exists");
         }
         $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);  // WORKFLOW_STAGE_ID_INTERNAL_REVIEW value is equal to 2 from interface iPKPApplicationInfoProvider
+
         $emailAddress = $this->getPOSTPayloadVariable("email");
+        if ($emailAddress === NULL || $emailAddress === "") {
+            throw new Exception("Error: $emailAddress is not set in the header");
+        }
+
+
         /** @var User */
         $user = $this->getUserForReviewing($emailAddress, $journalId);
         $userId = $user->getId();
+
+        if ($user === NULL || $user === "") {
+            throw new Exception("Error: There is not user with this email and journal $emailAddress is not set in the header");
+        }
 
         $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
 
@@ -507,7 +519,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
         /* @var $reviewerSubmissionDao ReviewerSubmissionDAO */
         $reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewAssignment->getId());
-
 
         $editorMessageCommentText = $this->getPOSTPayloadVariable("editor_message");
         $editorAndAuthorMessageCommentText = $this->getPOSTPayloadVariable("message_editor_author");

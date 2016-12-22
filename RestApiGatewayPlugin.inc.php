@@ -216,7 +216,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         // in case a reviewer submit the article review
                         $resultArray = $this->saveArticleReview();
                         $response = array(
-                            "submission_id" => $resultArray["submissionId"],
                             "journal_id" => $resultArray["journalId"],
                             "user_Id" => $resultArray["userId"],
                             "version" => $this->APIVersion
@@ -387,7 +386,12 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $filename = $this->getPOSTPayloadVariable("file_name");
         $articleUrl = $this->getPOSTPayloadVariable("article_url");
         $title = $this->getPOSTPayloadVariable("title");
+        $submission_id = $this->getPOSTPayloadVariable("submission_id");
+        $version_id = $this->getPOSTPayloadVariable("version_id");
 
+        if($submission_id !== ""){
+
+        }
         /** Submission */
         $submission->setContextId($contextId);
         $submission->setDateSubmitted(Core::getCurrentDate());

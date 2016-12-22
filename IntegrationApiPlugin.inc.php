@@ -14,6 +14,7 @@ class IntegrationApiPlugin extends GenericPlugin
 
     /** @var string authoring tool URL address */
     private $atURL;
+    protected $sharedKey;
 
     /**
      * Get the name of the settings file to be installed on new context
@@ -79,6 +80,8 @@ class IntegrationApiPlugin extends GenericPlugin
                 HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
                 HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'registerReviewerWeBHook'));
                 HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'removeReviewerWeBHook'));
+                HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWeBHook'));
+
                 // HookRegistry::register ('TemplateManager::display', array($this, 'editReviewerTitle'));
             }
             return true;
@@ -143,6 +146,36 @@ class IntegrationApiPlugin extends GenericPlugin
         $url = $this->atURL . '/document/delReviewer/';
         $this->sendPostRequest($url, $dataArray);
         return false;
+    }
+
+
+    /**
+     * Creates New In Editor Article Revision By OJS Editor User
+     * @param $hookname
+     * @param $args
+     */
+    function newRevisionWeBHook($hookname, $args){
+
+        $authorEmail =& $args[0];
+        $submissionId =& $args[1];
+        $userName =& $args[2];
+        error_log("newRevisionWeBHook1" . $authorEmail, 0);
+        error_log("newRevisionWeBHook2", $submissionId,0);
+        error_log("newRevisionWeBHook3" . $userName, 0);
+
+        $this->sharedKey = "d5PW586jwefjn!3fv";
+
+        $dataArray = ['author_email' => $authorEmail,
+            'key' => $this->sharedKey, //shared key between OJS and Editor software
+            'submission_id' => $submissionId,
+            'user_name' => $userName];  //editor user for logging in
+        //Then send the email address of reviewer to authoring tool.
+        // AT must give review aceess to this article with the submission id
+        $this->atURL = 'http://localhost:8100';
+        $url = $this->atURL . '/newsumissionrevision/';
+        $result = $this->sendPostRequest($url, $dataArray);
+        error_log("newRevisionWeBHook_result" . $result, 0);
+
     }
 
     /**
@@ -269,7 +302,7 @@ class IntegrationApiPlugin extends GenericPlugin
         error_log("sending put request: ", 0);
         error_log($url, 0);
         foreach ($data_array as $a => $b) {
-            error_log($a . '--->' . $b, 0);
+        error_log($a . '--->' . $b, 0);
         }*/
         $result = $this->sendRequest('PUT', $url, $data_array);
         return $result;
@@ -286,7 +319,7 @@ class IntegrationApiPlugin extends GenericPlugin
         error_log("sending post request: ", 0);
         error_log($url, 0);
         foreach ($data_array as $a => $b) {
-            error_log($a . '--->' . $b, 0);
+        error_log($a . '--->' . $b, 0);
         }
          * */
         $result = $this->sendRequest('POST', $url, $data_array);

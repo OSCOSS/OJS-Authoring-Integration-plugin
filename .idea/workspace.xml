@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="BookmarkManager">
-    <bookmark url="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" description="{" line="468" />
+    <bookmark url="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" description="{" line="472" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="31d3a6ff-e2c9-410b-b57f-4387ef2516f8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/IntegrationApiPlugin.inc.php" afterPath="$PROJECT_DIR$/IntegrationApiPlugin.inc.php" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" afterPath="$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" />
     </list>
     <ignored path="ojsfw.iws" />
@@ -35,26 +36,26 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="true">
+      <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="104">
-              <caret line="471" column="73" selection-start-line="471" selection-start-column="73" selection-end-line="471" selection-end-column="73" />
+            <state relative-caret-position="160">
+              <caret line="865" column="30" selection-start-line="865" selection-start-column="30" selection-end-line="865" selection-end-column="30" />
               <folding>
-                <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
-                <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
-                <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
-                <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
+                <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
+                <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
+                <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
+                <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="false">
+      <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="325">
-              <caret line="104" column="10" selection-start-line="104" selection-start-column="10" selection-end-line="104" selection-end-column="10" />
+            <state relative-caret-position="5340">
+              <caret line="356" column="1" selection-start-line="356" selection-start-column="1" selection-end-line="356" selection-end-column="1" />
               <folding />
             </state>
           </provider>
@@ -104,8 +105,7 @@
   </component>
   <component name="PhpWorkspaceProjectConfiguration" backward_compatibility_performed="true" interpreter_name="Remote PHP 5.4" />
   <component name="ProjectFrameBounds">
-    <option name="x" value="-56" />
-    <option name="y" value="-845" />
+    <option name="y" value="23" />
     <option name="width" value="1280" />
     <option name="height" value="722" />
   </component>
@@ -134,6 +134,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -154,14 +155,13 @@
           </PATH>
         </subPane>
       </pane>
-      <pane id="Scope" />
       <pane id="Scratches" />
     </panes>
   </component>
   <component name="PropertiesComponent">
     <property name="settings.editor.selected.configurable" value="vcs.Git" />
     <property name="settings.editor.splitter.proportion" value="0.2" />
-    <property name="last_opened_file_path" value="$USER_HOME$/Projects/ojsfw/ojs" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="ignore_missing_gitignore" value="true" />
     <property name="js-jscs-nodeInterpreter" value="/usr/local/bin/node" />
@@ -262,7 +262,8 @@
       <workItem from="1479402503571" duration="5545000" />
       <workItem from="1481214607120" duration="1201000" />
       <workItem from="1481215877729" duration="4861000" />
-      <workItem from="1481231117473" duration="5731000" />
+      <workItem from="1481231117473" duration="5897000" />
+      <workItem from="1482436946053" duration="80000" />
     </task>
     <task id="LOCAL-00001" summary="plain structure,&#10;&#10;github.com/OSCOSS/OJSFWplugin/issues/1&#10;&#10;plug in can be seen in the list of plugins in &#10;Setting / Website / plugins&#10;">
       <created>1465832910988</created>
@@ -453,18 +454,25 @@
       <option name="project" value="LOCAL" />
       <updated>1481557464941</updated>
     </task>
-    <option name="localTasksCounter" value="28" />
+    <task id="LOCAL-00028" summary="adding block comments, adding error handling">
+      <created>1481557496555</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1481557496555</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="76105000" />
+    <option name="totallyTimeSpent" value="76351000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-56" y="-845" width="1280" height="722" extended-state="0" />
+    <frame x="0" y="23" width="1280" height="722" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.1631664" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16558966" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3982906" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18336026" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
@@ -568,10 +576,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -645,10 +653,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -682,10 +690,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -844,24 +852,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
+    <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="325">
-          <caret line="104" column="10" selection-start-line="104" selection-start-column="10" selection-end-line="104" selection-end-column="10" />
-          <folding />
+        <state relative-caret-position="160">
+          <caret line="865" column="30" selection-start-line="865" selection-start-column="30" selection-end-line="865" selection-end-column="30" />
+          <folding>
+            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
+          </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
+    <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="104">
-          <caret line="471" column="73" selection-start-line="471" selection-start-column="73" selection-end-line="471" selection-end-column="73" />
-          <folding>
-            <marker date="1481557488000" expanded="true" signature="26648:27235" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26688:27226" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="26763:27216" placeholder="..." />
-            <marker date="1481557488000" expanded="true" signature="27161:27206" placeholder="..." />
-          </folding>
+        <state relative-caret-position="5340">
+          <caret line="356" column="1" selection-start-line="356" selection-start-column="1" selection-end-line="356" selection-end-column="1" />
+          <folding />
         </state>
       </provider>
     </entry>

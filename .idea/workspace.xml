@@ -7,7 +7,6 @@
     <list default="true" id="31d3a6ff-e2c9-410b-b57f-4387ef2516f8" name="Default" comment="">
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/IntegrationApiPlugin.inc.php" afterPath="$PROJECT_DIR$/IntegrationApiPlugin.inc.php" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" afterPath="$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" />
     </list>
     <ignored path="ojsfw.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -36,26 +35,26 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="false">
+      <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="160">
-              <caret line="865" column="30" selection-start-line="865" selection-start-column="30" selection-end-line="865" selection-end-column="30" />
+            <state relative-caret-position="3088">
+              <caret line="887" column="0" selection-start-line="887" selection-start-column="0" selection-end-line="887" selection-end-column="0" />
               <folding>
-                <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
-                <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
-                <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
-                <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
+                <marker date="1483448927000" expanded="true" signature="26757:27344" placeholder="..." />
+                <marker date="1483448927000" expanded="true" signature="26797:27335" placeholder="..." />
+                <marker date="1483448927000" expanded="true" signature="26872:27325" placeholder="..." />
+                <marker date="1483448927000" expanded="true" signature="27270:27315" placeholder="..." />
               </folding>
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="true">
+      <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="5340">
-              <caret line="356" column="1" selection-start-line="356" selection-start-column="1" selection-end-line="356" selection-end-column="1" />
+            <state relative-caret-position="173">
+              <caret line="394" column="25" selection-start-line="394" selection-start-column="25" selection-end-line="394" selection-end-column="25" />
               <folding />
             </state>
           </provider>
@@ -263,7 +262,7 @@
       <workItem from="1481214607120" duration="1201000" />
       <workItem from="1481215877729" duration="4861000" />
       <workItem from="1481231117473" duration="5897000" />
-      <workItem from="1482436946053" duration="80000" />
+      <workItem from="1482436946053" duration="2020000" />
     </task>
     <task id="LOCAL-00001" summary="plain structure,&#10;&#10;github.com/OSCOSS/OJSFWplugin/issues/1&#10;&#10;plug in can be seen in the list of plugins in &#10;Setting / Website / plugins&#10;">
       <created>1465832910988</created>
@@ -461,20 +460,27 @@
       <option name="project" value="LOCAL" />
       <updated>1481557496555</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="1- when making a new revision in ojs , let fiduswriter know about it: send email, submission_id&#10;&#10;---test is left&#10;&#10;2- submission_id, version_id is to send to OJS at article submission time to fw , at the to add click over on single sign on. So we update the link in the interface with diffirent versions: version numbers become clickable &#10;&#10;---- update the link part is left&#10;------Fw side and test is left">
+      <created>1482437118911</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1482437118911</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="76351000" />
+    <option name="totallyTimeSpent" value="78291000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1280" height="722" extended-state="6" />
+    <frame x="0" y="23" width="1280" height="722" extended-state="0" />
     <editor active="true" />
     <layout>
       <window_info id="Remote Host" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16558966" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
-      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3982906" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3968254" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18336026" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.091897234" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
@@ -523,7 +529,8 @@
     <MESSAGE value="adding the review step. complete" />
     <MESSAGE value="adding block comments" />
     <MESSAGE value="adding block comments, adding error handling" />
-    <option name="LAST_COMMIT_MESSAGE" value="adding block comments, adding error handling" />
+    <MESSAGE value="1- when making a new revision in ojs , let fiduswriter know about it: send email, submission_id&#10;&#10;---test is left&#10;&#10;2- submission_id, version_id is to send to OJS at article submission time to fw , at the to add click over on single sign on. So we update the link in the interface with diffirent versions: version numbers become clickable &#10;&#10;---- update the link part is left&#10;------Fw side and test is left" />
+    <option name="LAST_COMMIT_MESSAGE" value="1- when making a new revision in ojs , let fiduswriter know about it: send email, submission_id&#10;&#10;---test is left&#10;&#10;2- submission_id, version_id is to send to OJS at article submission time to fw , at the to add click over on single sign on. So we update the link in the interface with diffirent versions: version numbers become clickable &#10;&#10;---- update the link part is left&#10;------Fw side and test is left" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -576,10 +583,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="27270:27315" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -653,10 +660,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="27270:27315" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -690,10 +697,10 @@
         <state relative-caret-position="0">
           <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
           <folding>
-            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="27270:27315" placeholder="..." />
           </folding>
         </state>
       </provider>
@@ -852,24 +859,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
+    <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="160">
-          <caret line="865" column="30" selection-start-line="865" selection-start-column="30" selection-end-line="865" selection-end-column="30" />
-          <folding>
-            <marker date="1482437025000" expanded="true" signature="26757:27344" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26797:27335" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="26872:27325" placeholder="..." />
-            <marker date="1482437025000" expanded="true" signature="27270:27315" placeholder="..." />
-          </folding>
+        <state relative-caret-position="173">
+          <caret line="394" column="25" selection-start-line="394" selection-start-column="25" selection-end-line="394" selection-end-column="25" />
+          <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
+    <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="5340">
-          <caret line="356" column="1" selection-start-line="356" selection-start-column="1" selection-end-line="356" selection-end-column="1" />
-          <folding />
+        <state relative-caret-position="3088">
+          <caret line="887" column="0" selection-start-line="887" selection-start-column="0" selection-end-line="887" selection-end-column="0" />
+          <folding>
+            <marker date="1483448927000" expanded="true" signature="26757:27344" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26797:27335" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="26872:27325" placeholder="..." />
+            <marker date="1483448927000" expanded="true" signature="27270:27315" placeholder="..." />
+          </folding>
         </state>
       </provider>
     </entry>

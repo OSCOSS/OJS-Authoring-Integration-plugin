@@ -156,24 +156,35 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     function newRevisionWeBHook($hookname, $args){
 
-        $authorEmail =& $args[0];
-        $submissionId =& $args[1];
-        $userName =& $args[2];
-        error_log("newRevisionWeBHook1" . $authorEmail, 0);
-        error_log("newRevisionWeBHook2", $submissionId,0);
-        error_log("newRevisionWeBHook3" . $userName, 0);
+
+        $revisionReqArr =& $args[1];
+        $submissionId = $revisionReqArr[0];
+        //$stage_id = $revisionReqArr[1];
+        $round = $revisionReqArr[2];
+        //$status = $revisionReqArr[3];
+        //error_log("newRevisionWeBHook1" . $submissionId, 0);  //example: 74, 3, 5, 6
+        //error_log("newRevisionWeBHook2". $stage_id,0);
+        //error_log("newRevisionWeBHook3". $round,0);
+        //error_log("newRevisionWeBHook4". $status,0);
 
         $this->sharedKey = "d5PW586jwefjn!3fv";
 
-        $dataArray = ['author_email' => $authorEmail,
+        $authorEmail = $this->getUserEmailBySubmissionId($submissionId);
+        $userName = $this->getUserNameBySubmissionId($submissionId);
+
+
+        $dataArray = [
+            'author_email' => $authorEmail,
+            'user_name' => $userName,
             'key' => $this->sharedKey, //shared key between OJS and Editor software
             'submission_id' => $submissionId,
-            'user_name' => $userName];  //editor user for logging in
+            'round' => $round];  //editor user for logging in
         //Then send the email address of reviewer to authoring tool.
         // AT must give review aceess to this article with the submission id
         $this->atURL = 'http://localhost:8100';
         $url = $this->atURL . '/newsumissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
+        error_log("MOINMOIN:" . var_export($dataArray, true), 0);
         error_log("newRevisionWeBHook_result" . $result, 0);
 
     }
@@ -247,7 +258,12 @@ class IntegrationApiPlugin extends GenericPlugin
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignment = $RADao->getById($reviewId);
+        $reviewAssignmentArray = $RADao->getById($reviewId);
+        if(is_array($reviewAssignmentArray)){
+            $reviewAssignment = $reviewAssignmentArray[0];
+        } else{
+            $reviewAssignment = $reviewAssignmentArray;
+        }
         /** @var ReviewAssignment $reviewAssignment */
         $userId = $reviewAssignment->getReviewerId();
         return $this->getUserName($userId);
@@ -261,7 +277,12 @@ class IntegrationApiPlugin extends GenericPlugin
     {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignment = $RADao->getById($reviewId);
+        $reviewAssignmentArray = $RADao->getById($reviewId);
+        if(is_array($reviewAssignmentArray)){
+            $reviewAssignment = $reviewAssignmentArray[0];
+        } else{
+            $reviewAssignment = $reviewAssignmentArray;
+        }
         /** @var ReviewAssignment $reviewAssignment */
         $submissionId = $reviewAssignment->getSubmissionId();
         return $submissionId;
@@ -352,6 +373,48 @@ class IntegrationApiPlugin extends GenericPlugin
         $matches = explode('document/', $matches[1]);
         $documentId = $matches[1];
         return $documentId;
+    }
+
+    /**
+     * @param $submissionId
+     * @return mixed
+     */
+    private function getUserEmailBySubmissionId($submissionId)
+    {
+        /** @var UserDAO $userDao */
+        $userDao = DAORegistry::getDAO('UserDAO');
+        /** @var ReviewAssignmentDAO $RADao */
+        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
+        if(is_array($reviewAssignmentArray)){
+            foreach ($reviewAssignmentArray as $reviewAssignmentElement)
+                $reviewAssignment = $reviewAssignmentElement;
+        } else{
+            $reviewAssignment = $reviewAssignmentArray;
+        }
+        /** @var ReviewAssignment $reviewAssignment */
+        $userId = $reviewAssignment->getReviewerId();
+        return $userDao->getUserEmail($userId);
+    }
+
+    /**
+     * @param $submissionId
+     * @return string
+     */
+    private function getUserNameBySubmissionId($submissionId)
+    {
+        /** @var ReviewAssignmentDAO $RADao */
+        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
+        if(is_array($reviewAssignmentArray)){
+            foreach ($reviewAssignmentArray as $reviewAssignmentElement)
+                $reviewAssignment = $reviewAssignmentElement;
+        } else{
+            $reviewAssignment = $reviewAssignmentArray;
+        }
+        /** @var ReviewAssignment $reviewAssignment */
+        $userId = $reviewAssignment->getReviewerId();
+        return $this->getUserName($userId);
     }
 
 }

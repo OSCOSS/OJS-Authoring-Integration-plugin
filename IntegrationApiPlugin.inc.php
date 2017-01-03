@@ -174,7 +174,7 @@ class IntegrationApiPlugin extends GenericPlugin
 
 
         $dataArray = [
-            'author_email' => $authorEmail,
+            'reviewer_email' => $authorEmail,
             'user_name' => $userName,
             'key' => $this->sharedKey, //shared key between OJS and Editor software
             'submission_id' => $submissionId,
@@ -184,8 +184,8 @@ class IntegrationApiPlugin extends GenericPlugin
         $this->atURL = 'http://localhost:8100';
         $url = $this->atURL . '/document/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
-        error_log("MOINMOIN:" . var_export($dataArray, true), 0);
-        error_log("newRevisionWeBHook_result" . $result, 0);
+        //error_log("MOINMOIN:" . var_export($dataArray, true), 0);
+        //error_log("newRevisionWeBHook_result" . $result, 0);
 
     }
 

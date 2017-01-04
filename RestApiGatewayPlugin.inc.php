@@ -380,30 +380,24 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * @param Submission $submission
      * @return Submission
      */
-    private function setArticleVariablesFromPOSTPayload($submission)
+    private function setArticleSubmissionVariablesFromPOSTPayload($submission)
     {
         $contextId = $this->getPOSTPayloadVariable("journal_id");
         $filename = $this->getPOSTPayloadVariable("file_name");
-        $articleUrl = $this->getPOSTPayloadVariable("article_url");
         $title = $this->getPOSTPayloadVariable("title");
-        $submission_id = $this->getPOSTPayloadVariable("submission_id");
-        $version_id = $this->getPOSTPayloadVariable("version_id");
 
-        if($submission_id !== ""){
+        //version numbers become clickable
+        // update the link part is left
+        //Fw side and test is left
 
-        }
+
         /** Submission */
         $submission->setContextId($contextId);
         $submission->setDateSubmitted(Core::getCurrentDate());
 
-        $single_sign_on_Url = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
-        $linkToOJS = '<a href="' . $single_sign_on_Url . '">Open in Editor: ' . $title . '</a>';
-
         $submission->setLocale($this->defaultLocale);
         $submission->setSubject($title, $this->defaultLocale);
         //$submission->setFileName($filename, $this->defaultLocale);
-        $submission->setTitle($linkToOJS, $this->defaultLocale);
-        $submission->setCleanTitle($linkToOJS, $this->defaultLocale);
         // setting data as article_url did not work,
         // instead we use the file_name to store it and the title will keep it.
         //$submission->setData("article_url", $articleUrl);
@@ -416,17 +410,94 @@ class RestApiGatewayPlugin extends GatewayPlugin
      */
     private function saveArticleWithAuthor()
     {
+
+        $submission_id = $this->getPOSTPayloadVariable("submission_id");
+        $version_id = $this->getPOSTPayloadVariable("version_id");
+        //error_log("MOINMOIN4:" . var_export([$submission_id, $version_id], true), 0);
+        $journalId = 0;
+        $userId = 0;
+        if ($submission_id !== "" && $version_id !== "") {
+
+            $submissionId = $submission_id;
+            $this->updateArticleSubmissionBySecondArticleSubmit($submissionId, $version_id);
+        } else {
+            $submissionId = $this->saveNewArticleSubmission();
+            $emailAddress = $this->getPOSTPayloadVariable("email");
+            $firstName = $this->getPOSTPayloadVariable("first_name");
+            $lastName = $this->getPOSTPayloadVariable("last_name");
+            $journalId = $this->getPOSTPayloadVariable("journal_id");
+
+            $user = $this->getUserForAuthoring($emailAddress, $journalId, $firstName, $lastName);
+            $userId = $user->getId();
+            //check if author exist in db
+            $authorId = $this->saveAuthor($submissionId, $journalId, $emailAddress, $firstName, $lastName);
+
+            // Assign the user author to the stage
+            $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+            $stageAssignmentDao->build($submissionId, $this->getAuthorUserGroupId($journalId), $user->getId());
+
+        }
+
+
+        $resultArray = array(
+            "journalId" => $journalId,
+            "submissionId" => $submissionId,
+            "userId" => $userId,
+        );
+        return $resultArray;
+    }
+
+    /**
+     * @param $articleUrl
+     * @param $title
+     * @return string
+     */
+    private function makeSingleSignOnURL($articleUrl, $title)
+    {
+        $single_sign_on_Url = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
+        $linkToOJS = '<a href="' . $single_sign_on_Url . '">Open : ' . $title . '</a>';
+        return $linkToOJS;
+    }
+
+    /**
+     * @param $oldTitle
+     * @param $version_num
+     * @return string
+     */
+    private function makeSingleSignOnURLForRevision($oldTitle, $version_num)
+    {
+        //error_log("MOINMOIN1:" . var_export([$oldTitle,$version_num], true), 0);
+        $articleUrl = $this->getPOSTPayloadVariable("article_url");
+        $oldLinkToOJS = $oldTitle;
+        $single_sign_on_Url = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
+        //error_log("MOINMOIN2:" . $single_sign_on_Url, 0);
+
+        $linkToOJS = $oldLinkToOJS . ' &nbsp;<a href="' . $single_sign_on_Url . '">revision ' . $version_num . '</a>';
+        //error_log("MOINMOIN3:" . $linkToOJS, 0);
+        return $linkToOJS;
+    }
+
+    /**
+     * @return mixed
+     */
+    private function saveNewArticleSubmission()
+    {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->newDataObject();
         $submission->setStatus(STATUS_QUEUED);
         $submission->setSubmissionProgress(0);
-        $this->setArticleVariablesFromPOSTPayload($submission);
 
+        $articleUrl = $this->getPOSTPayloadVariable("article_url");
+        $title = $this->getPOSTPayloadVariable("title");
+
+        $submission = $this->setArticleSubmissionVariablesFromPOSTPayload($submission);
+        $linkToOJS = $this->makeSingleSignOnURL($articleUrl, $title);
+        $submission->setTitle($linkToOJS, $this->defaultLocale);
+        $submission->setCleanTitle($linkToOJS, $this->defaultLocale);
         $workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
         //  $submission->setStageId(WorkflowStageDAO::getIdFromPath($node->getAttribute('stage')));
         $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);  // WORKFLOW_STAGE_ID_SUBMISSION value is equal to 1 in our first journal test
         //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
-
 
         $journalId = $this->getPOSTPayloadVariable("journal_id");
 
@@ -443,25 +514,30 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $submission->setData("sectionId", $sectionId);
         // Insert the submission
         $submissionId = $submissionDao->insertObject($submission);
+        return $submissionId;
+    }
 
-        $emailAddress = $this->getPOSTPayloadVariable("email");
-        $firstName = $this->getPOSTPayloadVariable("first_name");
-        $lastName = $this->getPOSTPayloadVariable("last_name");
-        $user = $this->getUserForAuthoring($emailAddress, $journalId, $firstName, $lastName);
 
-        //check if author exist in db
-        $authorId = $this->saveAuthor($submissionId, $journalId, $emailAddress, $firstName, $lastName);
+    /**
+     * @param $submissionId
+     * @param $version_num
+     * @return Submission
+     * @throws Exception
+     */
+    private function updateArticleSubmissionBySecondArticleSubmit($submissionId, $version_num)
+    {
+        $submissionDao = Application::getSubmissionDAO();
+        $submission = $submissionDao->getById($submissionId);
+        //error_log("MOINMOIN0:" . var_export([$submissionId,$version_num, $submission], true), 0);
 
-        // Assign the user author to the stage
-        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-        $stageAssignmentDao->build($submissionId, $this->getAuthorUserGroupId($journalId), $user->getId());
+        if ($submission === NUll || $submission === "") {
 
-        $resultArray = array(
-            "journalId" => $journalId,
-            "submissionId" => $submissionId,
-            "userId" => $user->getId(),
-        );
-        return $resultArray;
+            throw new Exception("Error: no submission with given submissionId $submissionId exists");
+        }
+        $singleSignOnURL = $this->makeSingleSignOnURLForRevision($submission->getTitle($this->defaultLocale), $version_num);
+        /** @var ArticleDAO $submissionDao * */
+        $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $singleSignOnURL], 'string', True);
+        $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $singleSignOnURL], 'string', True);
     }
 
     /**
@@ -483,7 +559,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
-        if ($submission === NUll|| $submission === ""){
+        if ($submission === NUll || $submission === "") {
             throw new Exception("Error: no submission with given submissionId $submissionId exists");
         }
         $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);  // WORKFLOW_STAGE_ID_INTERNAL_REVIEW value is equal to 2 from interface iPKPApplicationInfoProvider
@@ -883,5 +959,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $submissionCommentDao->insertObject($comment);
         return true;
     }
+
 }
 

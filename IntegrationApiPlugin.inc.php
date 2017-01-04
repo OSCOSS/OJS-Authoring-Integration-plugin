@@ -170,6 +170,7 @@ class IntegrationApiPlugin extends GenericPlugin
         $this->sharedKey = "d5PW586jwefjn!3fv";
 
         $authorEmail = $this->getUserEmailBySubmissionId($submissionId);
+        if(is_null($authorEmail)) return;   //it means its round 0 and no reviewer is assigned yet
         $userName = $this->getUserNameBySubmissionId($submissionId);
 
 
@@ -386,11 +387,17 @@ class IntegrationApiPlugin extends GenericPlugin
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
+        $reviewAssignment = NULL;
         if(is_array($reviewAssignmentArray)){
-            foreach ($reviewAssignmentArray as $reviewAssignmentElement)
+            foreach ($reviewAssignmentArray as $reviewAssignmentElement){
                 $reviewAssignment = $reviewAssignmentElement;
+            }
         } else{
             $reviewAssignment = $reviewAssignmentArray;
+        }
+
+        if(is_null($reviewAssignment)){ //it means its round 0 and no reviewer is assigned yet
+            return NULL;
         }
         /** @var ReviewAssignment $reviewAssignment */
         $userId = $reviewAssignment->getReviewerId();
@@ -406,11 +413,15 @@ class IntegrationApiPlugin extends GenericPlugin
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
+        $reviewAssignment = NULL;
         if(is_array($reviewAssignmentArray)){
             foreach ($reviewAssignmentArray as $reviewAssignmentElement)
                 $reviewAssignment = $reviewAssignmentElement;
         } else{
             $reviewAssignment = $reviewAssignmentArray;
+        }
+        if(is_null($reviewAssignment)){ //it means its round 0 and no reivewer is assigned yet
+            return NULL;
         }
         /** @var ReviewAssignment $reviewAssignment */
         $userId = $reviewAssignment->getReviewerId();

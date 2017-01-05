@@ -1,7 +1,10 @@
 <?php
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.submission.SubmissionDAO');
-
+import('classes.user.UserDAO');
+import('classes.user.User');
+import('lib.pkp.classes.security.AuthSourceDAO');
+import('lib.pkp.classes.submission.SubmissionDAO');
 /**
  * Project OSCOSS
  * University of Bonn
@@ -177,7 +180,9 @@ class IntegrationApiPlugin extends GenericPlugin
         //error_log("newRevisionWeBHook4". $status,0);
 
         $this->sharedKey = "d5PW586jwefjn!3fv";
+        error_log("MOINMOIN:" . var_export($revisionReqArr, true), 0);
 
+        if (is_null($submissionId)) return;   //it means its round 0 and no reviewer is assigned yet
         $authorEmail = $this->getAuthorEmailBySubmissionId($submissionId);
         if (is_null($authorEmail)) return;   //it means its round 0 and no reviewer is assigned yet
         $userName = $this->getAuthorUserNameBySubmissionId($submissionId);
@@ -475,10 +480,13 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     private function getAuthorEmailBySubmissionId($submissionId)
     {
+        error_log("submissionId: ". $submissionId,0);
+
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         /** @var Author $author */
         $author = $authorDao->getBySubmissionId($submissionId);
+        error_log("author: ". var_dump($author),0);
         $email = $author->getEmail();
         return $email;
     }

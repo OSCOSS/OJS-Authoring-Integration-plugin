@@ -485,6 +485,7 @@ class IntegrationApiPlugin extends GenericPlugin
 
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
+        error_log("AuthorDao: ".var_export( $authorDao),0);
         /** @var Author $author */
         $author = $authorDao->getBySubmissionId($submissionId);
         error_log("author: ". var_dump($author),0);

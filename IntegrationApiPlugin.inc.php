@@ -488,11 +488,11 @@ class IntegrationApiPlugin extends GenericPlugin
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         error_log("AuthorDao: ". var_dump($authorDao),0);
-        /** @var Author $author */
         $authors = $authorDao->getBySubmissionId($submissionId);
         $email = "";
         foreach ($authors as $author){
-            $email = $author['email']; //get the first author
+            /** @var Author $author */
+            $email = $author->getEmail(); //get the first author
             break;
         }
         error_log("author: ". var_dump($author),0);
@@ -508,11 +508,11 @@ class IntegrationApiPlugin extends GenericPlugin
     {
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
-        /** @var Author $author */
         $authors = $authorDao->getBySubmissionId($submissionId);
         $userName = "";
         foreach ($authors as $author){
-            $userName = $author['first_name']. $author['last_name'].$author['author_id']; //get the first author
+            /** @var Author $author */
+            $userName = $author->getFullName();
             break;
         }
         return $userName;

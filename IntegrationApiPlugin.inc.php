@@ -3,6 +3,7 @@ import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.submission.SubmissionDAO');
 import('classes.user.UserDAO');
 import('classes.user.User');
+import('lib.pkp.classes.security.UserGroupAssignment');
 import('lib.pkp.classes.security.AuthSourceDAO');
 import('lib.pkp.classes.submission.SubmissionDAO');
 /**

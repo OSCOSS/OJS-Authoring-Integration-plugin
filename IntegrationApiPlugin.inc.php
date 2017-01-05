@@ -100,19 +100,19 @@ class IntegrationApiPlugin extends GenericPlugin
 
         $reviewAssignment =& $args[0];
         $row =& $args[1];
-        //error_log("loggingRegister:" . $reviewAssignment, 0);
+        //error_log("MOINMOINloggingRegister:" . $reviewAssignment, 0);
         $email = $this->getUserEmail($row[1]);
-        //error_log("email: " . $email, 0);
+        //error_log("MOINMOINemail: " . $email, 0);
         //array_keys(submitionID" . $row[0], 0);
         $userName = $this->getUserName($row[1]);
         $documentId = $this->getDocumentIdFromSubmissonId($row[0]);
-        //error_log("documentId ->>>>>>>>>>>>>" . $documentId, 0);
+        //error_log("MOINMOINdocumentId ->>>>>>>>>>>>>" . $documentId, 0);
         $dataArray = ['email' => $email,
             'doc_id' => $documentId,
             'user_name' => $userName];
         $this->atURL = 'http://localhost:8100';
         $url = $this->atURL . '/document/reviewer/';
-        //then send the email address of reviewer to AT.
+        // then send the email address of reviewer to AT.
         // Authoring tool must give review access to this article with the submission id
         $this->sendPostRequest($url, $dataArray);
         return false;
@@ -154,7 +154,8 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $hookname
      * @param $args
      */
-    function newRevisionWeBHook($hookname, $args){
+    function newRevisionWeBHook($hookname, $args)
+    {
 
 
         $revisionReqArr =& $args[1];
@@ -169,9 +170,9 @@ class IntegrationApiPlugin extends GenericPlugin
 
         $this->sharedKey = "d5PW586jwefjn!3fv";
 
-        $authorEmail = $this->getUserEmailBySubmissionId($submissionId);
-        if(is_null($authorEmail)) return;   //it means its round 0 and no reviewer is assigned yet
-        $userName = $this->getUserNameBySubmissionId($submissionId);
+        $authorEmail = $this->getAuthorEmailBySubmissionId($submissionId);
+        if (is_null($authorEmail)) return;   //it means its round 0 and no reviewer is assigned yet
+        $userName = $this->getAuthorUserNameBySubmissionId($submissionId);
 
 
         $dataArray = [
@@ -229,7 +230,7 @@ class IntegrationApiPlugin extends GenericPlugin
     {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
-        /** @var User $user  */
+        /** @var User $user */
         $user = $userDao->getById($userId);
         return $user->getUsername($userId);
     }
@@ -260,9 +261,9 @@ class IntegrationApiPlugin extends GenericPlugin
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
-        if(is_array($reviewAssignmentArray)){
+        if (is_array($reviewAssignmentArray)) {
             $reviewAssignment = $reviewAssignmentArray[0];
-        } else{
+        } else {
             $reviewAssignment = $reviewAssignmentArray;
         }
         /** @var ReviewAssignment $reviewAssignment */
@@ -279,9 +280,9 @@ class IntegrationApiPlugin extends GenericPlugin
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
-        if(is_array($reviewAssignmentArray)){
+        if (is_array($reviewAssignmentArray)) {
             $reviewAssignment = $reviewAssignmentArray[0];
-        } else{
+        } else {
             $reviewAssignment = $reviewAssignmentArray;
         }
         /** @var ReviewAssignment $reviewAssignment */
@@ -321,11 +322,11 @@ class IntegrationApiPlugin extends GenericPlugin
     private function sendPutRequest($url, $data_array)
     {
         /**
-        error_log("sending put request: ", 0);
-        error_log($url, 0);
-        foreach ($data_array as $a => $b) {
-        error_log($a . '--->' . $b, 0);
-        }*/
+         * error_log("sending put request: ", 0);
+         * error_log($url, 0);
+         * foreach ($data_array as $a => $b) {
+         * error_log($a . '--->' . $b, 0);
+         * }*/
         $result = $this->sendRequest('PUT', $url, $data_array);
         return $result;
     }
@@ -338,11 +339,11 @@ class IntegrationApiPlugin extends GenericPlugin
     private function sendPostRequest($url, $data_array)
     {
         /**
-        error_log("sending post request: ", 0);
-        error_log($url, 0);
-        foreach ($data_array as $a => $b) {
-        error_log($a . '--->' . $b, 0);
-        }
+         * error_log("sending post request: ", 0);
+         * error_log($url, 0);
+         * foreach ($data_array as $a => $b) {
+         * error_log($a . '--->' . $b, 0);
+         * }
          * */
         $result = $this->sendRequest('POST', $url, $data_array);
         return $result;
@@ -380,7 +381,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $submissionId
      * @return mixed
      */
-    private function getUserEmailBySubmissionId($submissionId)
+    private function getReviewerEmailBySubmissionId($submissionId)
     {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
@@ -388,15 +389,15 @@ class IntegrationApiPlugin extends GenericPlugin
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
         $reviewAssignment = NULL;
-        if(is_array($reviewAssignmentArray)){
-            foreach ($reviewAssignmentArray as $reviewAssignmentElement){
+        if (is_array($reviewAssignmentArray)) {
+            foreach ($reviewAssignmentArray as $reviewAssignmentElement) {
                 $reviewAssignment = $reviewAssignmentElement;
             }
-        } else{
+        } else {
             $reviewAssignment = $reviewAssignmentArray;
         }
 
-        if(is_null($reviewAssignment)){ //it means its round 0 and no reviewer is assigned yet
+        if (is_null($reviewAssignment)) { //it means its round 0 and no reviewer is assigned yet
             return NULL;
         }
         /** @var ReviewAssignment $reviewAssignment */
@@ -408,24 +409,53 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $submissionId
      * @return string
      */
-    private function getUserNameBySubmissionId($submissionId)
+    private function getReviewerUserNameBySubmissionId($submissionId)
     {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
         $reviewAssignment = NULL;
-        if(is_array($reviewAssignmentArray)){
+        if (is_array($reviewAssignmentArray)) {
             foreach ($reviewAssignmentArray as $reviewAssignmentElement)
                 $reviewAssignment = $reviewAssignmentElement;
-        } else{
+        } else {
             $reviewAssignment = $reviewAssignmentArray;
         }
-        if(is_null($reviewAssignment)){ //it means its round 0 and no reivewer is assigned yet
+        if (is_null($reviewAssignment)) { //it means its round 0 and no reivewer is assigned yet
             return NULL;
         }
         /** @var ReviewAssignment $reviewAssignment */
         $userId = $reviewAssignment->getReviewerId();
         return $this->getUserName($userId);
+    }
+
+
+    /**
+     * @param $submissionId
+     * @return mixed
+     */
+    private function getAuthorEmailBySubmissionId($submissionId)
+    {
+        /** @var AuthorDao $authorDao */
+        $authorDao = DAORegistry::getDAO('AuthorDAO');
+        /** @var Author $author */
+        $author = $authorDao->getBySubmissionId($submissionId);
+        $email = $author->getEmail();
+        return $email;
+    }
+
+    /**
+     * @param $submissionId
+     * @return string
+     */
+    private function getAuthorUserNameBySubmissionId($submissionId)
+    {
+        /** @var AuthorDao $authorDao */
+        $authorDao = DAORegistry::getDAO('AuthorDAO');
+        /** @var Author $author */
+        $author = $authorDao->getBySubmissionId($submissionId);
+        $userId = $author->getId();
+        return $userId;
     }
 
 }

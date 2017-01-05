@@ -184,7 +184,7 @@ class IntegrationApiPlugin extends GenericPlugin
 
         $this->sharedKey = "d5PW586jwefjn!3fv";
         error_log("MOINMOIN:" . var_export($revisionReqArr, true), 0);
-
+        if($round == "1") return;
         if (is_null($submissionId)) return;   //it means its round 0 and no reviewer is assigned yet
         $authorEmail = $this->getAuthorEmailBySubmissionId($submissionId);
         if (is_null($authorEmail)) return;   //it means its round 0 and no reviewer is assigned yet

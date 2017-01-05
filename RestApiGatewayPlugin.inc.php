@@ -17,6 +17,8 @@ import('lib.pkp.classes.security.Role');
 import('lib.pkp.classes.security.UserGroupAssignment');
 import('lib.pkp.classes.security.AuthSourceDAO');
 import('lib.pkp.classes.submission.SubmissionDAO');
+import('classes.article.AuthorDAO');
+import('classes.article.Author');
 
 class RestApiGatewayPlugin extends GatewayPlugin
 {

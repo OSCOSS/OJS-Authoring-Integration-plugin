@@ -3,6 +3,8 @@ import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.submission.SubmissionDAO');
 import('classes.user.UserDAO');
 import('classes.user.User');
+import('classes.article.AuthorDAO');
+import('classes.article.Author');
 import('lib.pkp.classes.security.UserGroupAssignment');
 import('lib.pkp.classes.security.AuthSourceDAO');
 import('lib.pkp.classes.submission.SubmissionDAO');
@@ -485,10 +487,10 @@ class IntegrationApiPlugin extends GenericPlugin
 
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
-        error_log("AuthorDao: ".print_r( $authorDao),0);
+        error_log("AuthorDao: ". var_dump($authorDao),0);
         /** @var Author $author */
         $author = $authorDao->getBySubmissionId($submissionId);
-        error_log("author: ". print_r($author),0);
+        error_log("author: ". $author,0);
         $email = $author->getEmail();
         return $email;
     }

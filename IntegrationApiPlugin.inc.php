@@ -121,6 +121,9 @@ class IntegrationApiPlugin extends GenericPlugin
             'user_name' => $userName];
         $this->atURL = 'http://localhost:8100';
         $url = $this->atURL . '/document/reviewer/';
+
+        error_log("MOINMOINAddreviewer: " . var_export($dataArray), 0);
+
         // then send the email address of reviewer to AT.
         // Authoring tool must give review access to this article with the submission id
         $this->sendPostRequest($url, $dataArray);
@@ -183,7 +186,7 @@ class IntegrationApiPlugin extends GenericPlugin
         //error_log("newRevisionWeBHook4". $status,0);
 
         $this->sharedKey = "d5PW586jwefjn!3fv";
-        error_log("MOINMOIN:" . var_export($revisionReqArr, true), 0);
+        //error_log("MOINMOIN:" . var_export($revisionReqArr, true), 0);
         if($round == "1") return;
         if (is_null($submissionId)) return;   //it means its round 0 and no reviewer is assigned yet
         $authorEmail = $this->getAuthorEmailBySubmissionId($submissionId);

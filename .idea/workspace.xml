@@ -32,11 +32,11 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="true">
+      <file leaf-file-name="RestApiGatewayPlugin.inc.php" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="412">
-              <caret line="964" column="0" selection-start-line="964" selection-start-column="0" selection-end-line="964" selection-end-column="0" />
+            <state relative-caret-position="14385">
+              <caret line="959" column="20" selection-start-line="959" selection-start-column="20" selection-end-line="959" selection-end-column="20" />
               <folding>
                 <marker date="1483633861000" expanded="true" signature="29652:30239" placeholder="..." />
                 <marker date="1483633861000" expanded="true" signature="29692:30230" placeholder="..." />
@@ -47,11 +47,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="false">
+      <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="412">
-              <caret line="507" column="1" selection-start-line="507" selection-start-column="1" selection-end-line="507" selection-end-column="1" />
+            <state relative-caret-position="193">
+              <caret line="490" column="38" selection-start-line="490" selection-start-column="38" selection-end-line="490" selection-end-column="38" />
               <folding />
             </state>
           </provider>
@@ -85,8 +85,8 @@
         <option value="$PROJECT_DIR$/eis.bib.json" />
         <option value="$PROJECT_DIR$/eis.bib" />
         <option value="$PROJECT_DIR$/README.md" />
-        <option value="$PROJECT_DIR$/IntegrationApiPlugin.inc.php" />
         <option value="$PROJECT_DIR$/RestApiGatewayPlugin.inc.php" />
+        <option value="$PROJECT_DIR$/IntegrationApiPlugin.inc.php" />
       </list>
     </option>
   </component>
@@ -161,21 +161,21 @@
     <property name="WebServerToolWindowFactoryState" value="true" />
     <property name="ignore_missing_gitignore" value="true" />
     <property name="js-jscs-nodeInterpreter" value="/usr/local/bin/node" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth0" value="93" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth0" value="96" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder0" value="0" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth1" value="103" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth1" value="106" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder1" value="1" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth2" value="107" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth2" value="111" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder2" value="2" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth3" value="892" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_flatWidth3" value="895" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_flatOrder3" value="3" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth0" value="93" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth0" value="96" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder0" value="0" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth1" value="103" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth1" value="106" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder1" value="1" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth2" value="107" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth2" value="111" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder2" value="2" />
-    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth3" value="892" />
+    <property name="FileHistory.git4idea.history.GitHistoryProvider_treeWidth3" value="895" />
     <property name="FileHistory.git4idea.history.GitHistoryProvider_treeOrder3" value="3" />
   </component>
   <component name="RecentsManager">
@@ -259,7 +259,7 @@
       <workItem from="1481214607120" duration="1201000" />
       <workItem from="1481215877729" duration="4861000" />
       <workItem from="1481231117473" duration="5897000" />
-      <workItem from="1482436946053" duration="10140000" />
+      <workItem from="1482436946053" duration="10807000" />
     </task>
     <task id="LOCAL-00001" summary="plain structure,&#10;&#10;github.com/OSCOSS/OJSFWplugin/issues/1&#10;&#10;plug in can be seen in the list of plugins in &#10;Setting / Website / plugins&#10;">
       <created>1465832910988</created>
@@ -513,11 +513,32 @@
       <option name="project" value="LOCAL" />
       <updated>1483633886450</updated>
     </task>
-    <option name="localTasksCounter" value="37" />
+    <task id="LOCAL-00037" summary="adding and removing reviewers per round in ojs">
+      <created>1483645245206</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1483645245206</updated>
+    </task>
+    <task id="LOCAL-00038" summary="adding and removing reviewers per round in ojs">
+      <created>1483645674679</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1483645674679</updated>
+    </task>
+    <task id="LOCAL-00039" summary="adding and removing reviewers per round in ojs">
+      <created>1483645883553</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1483645883553</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="86411000" />
+    <option name="totallyTimeSpent" value="87078000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1280" height="724" extended-state="6" />
@@ -528,8 +549,8 @@
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.3968254" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.18336026" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.17563291" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.091897234" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.17563291" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.3306962" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32909605" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -909,24 +930,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="412">
-          <caret line="507" column="1" selection-start-line="507" selection-start-column="1" selection-end-line="507" selection-end-column="1" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/RestApiGatewayPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="412">
-          <caret line="964" column="0" selection-start-line="964" selection-start-column="0" selection-end-line="964" selection-end-column="0" />
+        <state relative-caret-position="14385">
+          <caret line="959" column="20" selection-start-line="959" selection-start-column="20" selection-end-line="959" selection-end-column="20" />
           <folding>
             <marker date="1483633861000" expanded="true" signature="29652:30239" placeholder="..." />
             <marker date="1483633861000" expanded="true" signature="29692:30230" placeholder="..." />
             <marker date="1483633861000" expanded="true" signature="29767:30220" placeholder="..." />
             <marker date="1483633861000" expanded="true" signature="30165:30210" placeholder="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="193">
+          <caret line="490" column="38" selection-start-line="490" selection-start-column="38" selection-end-line="490" selection-end-column="38" />
+          <folding />
         </state>
       </provider>
     </entry>

@@ -122,7 +122,7 @@ class IntegrationApiPlugin extends GenericPlugin
         $this->atURL = 'http://localhost:8100';
         $url = $this->atURL . '/document/reviewer/';
 
-        error_log("MOINMOINAddreviewer: " . var_export($dataArray), 0);
+        error_log("MOINMOINAddreviewer: " . $documentId."---". $email, 0);
 
         // then send the email address of reviewer to AT.
         // Authoring tool must give review access to this article with the submission id

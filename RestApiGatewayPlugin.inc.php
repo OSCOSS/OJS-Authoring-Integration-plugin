@@ -471,8 +471,8 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $oldLinkToOJS = $oldTitle;
         $single_sign_on_Url = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
         //error_log("MOINMOIN2:" . $single_sign_on_Url, 0);
-
-        $linkToOJS = $oldLinkToOJS . ' &nbsp;<a href="' . $single_sign_on_Url . '">revision ' . $version_num . '</a>';
+        $round = ($version_num +1 )/2;
+        $linkToOJS = $oldLinkToOJS . ' &nbsp;<a href="' . $single_sign_on_Url . '">Round ' . $round . '</a>';
         //error_log("MOINMOIN3:" . $linkToOJS, 0);
         return $linkToOJS;
     }

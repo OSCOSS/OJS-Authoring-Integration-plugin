@@ -101,11 +101,14 @@ class IntegrationApiPlugin extends GenericPlugin
         $reviewAssignment =& $args[0];
         $row =& $args[1];
         //error_log("MOINMOINloggingRegister:" . $reviewAssignment, 0);
-        $email = $this->getUserEmail($row[1]);
+        $submissionId = $row[0];
+        $reviewerId = $row[1];
+        $email = $this->getUserEmail($reviewerId);
         //error_log("MOINMOINemail: " . $email, 0);
         //array_keys(submitionID" . $row[0], 0);
-        $userName = $this->getUserName($row[1]);
-        $documentId = $this->getDocumentIdFromSubmissonId($row[0]);
+        $userName = $this->getUserName($reviewerId);
+        $round = ($row[4]);
+        $documentId = $this->getDocumentIdFromSubmissionId($submissionId, $round);
         //error_log("MOINMOINdocumentId ->>>>>>>>>>>>>" . $documentId, 0);
         $dataArray = ['email' => $email,
             'doc_id' => $documentId,
@@ -126,13 +129,18 @@ class IntegrationApiPlugin extends GenericPlugin
     function removeReviewerWeBHook($hookName, $args)
     {
 
-        $reviewAssignment =& $args[0];
+        //$reviewAssignment =& $args[0];
         $reviewId =& $args[1];
         #error_log("loggingRemoveReviewer:" . $reviewAssignment, 0);
         #error_log($reviewId, 0);
         $email = $this->getUserEmailByReviewID($reviewId);
         $submissionId = $this->getSubmissionIdByReviewID($reviewId);
-        $documentId = $this->getDocumentIdFromSubmissonId($submissionId);
+        /** @var ReviewAssignmentDAO $RADao */
+        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        /** @var ReviewAssignment $reviewAssignmentObject */
+        $reviewAssignmentObject = $RADao->getById($reviewId);
+        $round = $reviewAssignmentObject->getRound();
+        $documentId = $this->getDocumentIdFromSubmissionId($submissionId, $round);
         $userName = $this->getUserNameByReviewID($reviewId);
         //error_log("reviewer email: " . $email);
         //error_log("SubmissionId: " . $submissionId);
@@ -176,8 +184,8 @@ class IntegrationApiPlugin extends GenericPlugin
 
 
         $dataArray = [
-            'author_email' => $authorEmail,
-            'author_user_name' => $userName,
+            'reviewer_email' => $authorEmail,
+            'user_name' => $userName,
             'key' => $this->sharedKey, //shared key between OJS and Editor software
             'submission_id' => $submissionId,
             'round' => $round];  //editor user for logging in
@@ -230,8 +238,9 @@ class IntegrationApiPlugin extends GenericPlugin
     {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
-        /** @var User $user */
+        /** @var ReviewAssignment $reviewAssignment */
         $user = $userDao->getById($userId);
+        /** @var User $user */
         return $user->getUsername($userId);
     }
 
@@ -241,6 +250,7 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     private function getUserEmailByReviewID($reviewId)
     {
+        /** @var UserDAO $userDao **/
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -360,20 +370,49 @@ class IntegrationApiPlugin extends GenericPlugin
         return $user;
     }
 
+
     /**
      * @param $submissionId
+     * @param $round
      * @return mixed
      */
-    private function getDocumentIdFromSubmissonId($submissionId)
+    private function getDocumentIdFromSubmissionId($submissionId, $round)
     {
         $submissionDao = Application::getSubmissionDAO();
         /** @var Submission */
         $submission = $submissionDao->getById($submissionId);
         $submissionTitle = $submission->getTitle(AppLocale::getLocale());
+        $documentId = 0;
+        $submissionArrayInString= [];
+        $submissionInString= [];
         $matches = explode('"', $submissionTitle);
+        $count = count($matches);
+        for ($counter = 0; $counter < $count -1 ; $counter++ ) {
+            $position = strpos($matches[$counter], "document/");
+            if ($position !== FALSE) {
+                $match1 = explode('document/', $matches[$counter]);
+                $match1 = $match1[1];
+                $match2 = explode('>Round', $matches[$counter + 1]);
+                if(is_array($match2)){
+                    if(count($match2) ===2){
+                        $match2 = explode('</a>', $match2[1]);
+                        $match2 = $match2[0];
+                        $match2 = str_replace(' ', '', $match2);
 
-        $matches = explode('document/', $matches[1]);
-        $documentId = $matches[1];
+                    }else{
+                        $match2 = "1";
+                    }
+                }
+                $submissionInString['doc_id']= $match1;
+                $submissionInString['round']= $match2;
+                $submissionArrayInString[]= $submissionInString;
+            }
+        }
+        foreach ($submissionArrayInString as $subInString){
+            if($subInString['round'] === $round){
+                $documentId =  $subInString['doc_id'];
+            }
+        }
         return $documentId;
     }
 

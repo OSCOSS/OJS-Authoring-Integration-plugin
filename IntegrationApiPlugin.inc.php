@@ -420,7 +420,7 @@ class IntegrationApiPlugin extends GenericPlugin
             }
         }
         foreach ($submissionArrayInString as $subInString){
-            if($subInString['round'] === $round){
+            if($subInString['round'] == $round){
                 $documentId =  $subInString['doc_id'];
             }
         }

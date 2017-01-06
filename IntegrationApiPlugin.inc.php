@@ -498,7 +498,7 @@ class IntegrationApiPlugin extends GenericPlugin
             $email = $author->getEmail(); //get the first author
             break;
         }
-        error_log("author: ". var_dump($author),0);
+        error_log("author_email: ". var_dump($email),0);
         //$email = $author->getEmail();
         return $email;
     }

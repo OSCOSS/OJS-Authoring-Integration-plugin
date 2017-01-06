@@ -50,8 +50,8 @@
       <file leaf-file-name="IntegrationApiPlugin.inc.php" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="609">
-              <caret line="422" column="39" selection-start-line="422" selection-start-column="39" selection-end-line="422" selection-end-column="39" />
+            <state relative-caret-position="292">
+              <caret line="500" column="26" selection-start-line="500" selection-start-column="26" selection-end-line="500" selection-end-column="26" />
               <folding />
             </state>
           </provider>
@@ -259,7 +259,7 @@
       <workItem from="1481214607120" duration="1201000" />
       <workItem from="1481215877729" duration="4861000" />
       <workItem from="1481231117473" duration="5897000" />
-      <workItem from="1482436946053" duration="13951000" />
+      <workItem from="1482436946053" duration="14463000" />
     </task>
     <task id="LOCAL-00001" summary="plain structure,&#10;&#10;github.com/OSCOSS/OJSFWplugin/issues/1&#10;&#10;plug in can be seen in the list of plugins in &#10;Setting / Website / plugins&#10;">
       <created>1465832910988</created>
@@ -583,11 +583,18 @@
       <option name="project" value="LOCAL" />
       <updated>1483648719228</updated>
     </task>
-    <option name="localTasksCounter" value="47" />
+    <task id="LOCAL-00047" summary="adding and removing reviewers per round in ojs">
+      <created>1483701301288</created>
+      <option name="number" value="00047" />
+      <option name="presentableId" value="LOCAL-00047" />
+      <option name="project" value="LOCAL" />
+      <updated>1483701301288</updated>
+    </task>
+    <option name="localTasksCounter" value="48" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="90222000" />
+    <option name="totallyTimeSpent" value="90734000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1280" height="724" extended-state="6" />
@@ -994,8 +1001,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/IntegrationApiPlugin.inc.php">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="609">
-          <caret line="422" column="39" selection-start-line="422" selection-start-column="39" selection-end-line="422" selection-end-column="39" />
+        <state relative-caret-position="292">
+          <caret line="500" column="26" selection-start-line="500" selection-start-column="26" selection-end-line="500" selection-end-column="26" />
           <folding />
         </state>
       </provider>

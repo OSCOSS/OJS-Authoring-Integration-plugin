@@ -195,8 +195,8 @@ class IntegrationApiPlugin extends GenericPlugin
 
 
         $dataArray = [
-            'reviewer_email' => $authorEmail,
-            'user_name' => $userName,
+            'author_email' => $authorEmail,
+            'author_user_name' => $userName,
             'key' => $this->sharedKey, //shared key between OJS and Editor software
             'submission_id' => $submissionId,
             'round' => $round];  //editor user for logging in

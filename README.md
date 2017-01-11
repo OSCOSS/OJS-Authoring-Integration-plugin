@@ -37,7 +37,7 @@ Then, run the upgrade script to register the plugin with the system by running:
 php tools/upgrade.php upgrade
 ```
 
-#####3.To Activate:
+#####3.To Activate on the OJS end:
 Enable the plugin via the OJS website interface:
 
 Make sure you have set up at least one journal on your site. Otherwise the settings menu does not show.
@@ -51,6 +51,14 @@ Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integrat
 in OJS < 3.0:
  
 Home > User > Journal Management > Plugin Management
+
+#####4.To Activate on the Editor end:
+
+Set the OJS_URL to the base URL of your OJS installation (for example: "http://www.myojssite.com").
+
+Set the OJS_KEY to "d5PW586jwefjn!3fv".
+
+In the case of Fidus Writer, these settings are in the configuration.php file in the section SERVER_INFO.
 
 ##Documentation
 

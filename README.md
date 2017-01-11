@@ -21,20 +21,35 @@ An installation of OJS is needed. To install OJS please followup its readme in h
 To have its latest version please check out the master branch.
 
 #####2.Second step
-Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder of OJS.
-Create the folder if it does not exist.
+Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder inside your OJS folder.
+Create the folder if it does not exist. You can achieve this by running these commands:
 
+```
+cd plugins/generic/
+git clone https://github.com/OSCOSS/OJSIntegrationRestAPIplugin.git
+mv OJSIntegrationRestAPIplugin ojsIntegrationRestAPI
+cd ../..
+```
 
 Then, run the upgrade script to register the plugin with the system by running:
-php tools/upgrade.php upgrade
-#####3.To Activate:
-Enable the plugin via the interface:
 
-Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" in the routs below:
+```
+php tools/upgrade.php upgrade
+```
+
+#####3.To Activate:
+Enable the plugin via the OJS website interface:
+
+Make sure you have set up at least one journal on your site. Otherwise the settings menu does not show.
+
+Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" under the following routes:
 
  in OJS 3.0 :
+ 
  setting > website > plugins
- in OJS < 3.0:
+
+in OJS < 3.0:
+ 
 Home > User > Journal Management > Plugin Management
 
 ##Documentation

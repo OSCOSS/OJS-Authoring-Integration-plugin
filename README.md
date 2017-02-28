@@ -17,7 +17,7 @@ https://www.fiduswriter.org/
 
 
 ####Use case : FidusWriter & OJS
-Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) and OJS while the the code is written as open as possible for any system that can deploy Rest API that provides online authoring and  intends to advantage from a workflow managment system.
+Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) and OJS while the the code is written as open as possible for any system that can deploy Rest API that provides online authoring and  intends to benefit from a workflow managment system.
 
 ##Installation:
 #####1.First step

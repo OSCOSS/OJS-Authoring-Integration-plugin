@@ -3,7 +3,7 @@ Bonn University - GESIS Institute
 
 
 #OJSIntegrationRestAPIplugin
-Rest API Plugin for OJS to work with external web based authoring and text editing and publishing systems. Open joural sysems is an opensource journal management and publishing system that has been developed by the Public Knowledge Project. This Plugin for OJS creates a unified authoring, reviewing and publishing system by integrating the matching services of online shared authoring tools and OJS system. In the contex of OSCOSS project we fixed this API to work with Fiduswriter online authoring tool, however, it is open access and the srource code is available for any body to take tailor it as their reviewing and workflow managmenet system service.  
+Rest API Plugin for OJS to work with external web-based authoring and text editing and publishing systems. Open joural sysems is an opensource journal management and publishing system that has been developed by the Public Knowledge Project. This Plugin for OJS creates a unified authoring, reviewing and publishing system by integrating the matching services of Fiduswriter online shared authoring tool  and the OJS system.
 
 
 Github source code of the plugin:

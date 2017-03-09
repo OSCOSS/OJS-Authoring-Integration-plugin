@@ -3,16 +3,21 @@ Bonn University - GESIS Institute
 
 
 #OJSIntegrationRestAPIplugin
-Rest API Plugin for OJS to work with external web based authoring and text editing and publishing systems
+Rest API Plugin for OJS to work with external web-based authoring and text editing and publishing systems. Open joural sysems is an opensource journal management and publishing system that has been developed by the Public Knowledge Project. This Plugin for OJS creates a unified authoring, reviewing and publishing system by integrating the matching services of Fiduswriter online shared authoring tool and the OJS system.
 
 
 Github source code of the plugin:
 https://github.com/OSCOSS/OJSIntegrationRestAPIplugin
 
+Open journal system:
+https://pkp.sfu.ca/ojs/
 
-####Use case : FidusWriter
-Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) while
-the the code is written as open as possible for any software that can deploy Rest API to integrate with OJS.
+Fiduswriter:
+https://www.fiduswriter.org/
+
+
+####Use case : FidusWriter & OJS
+Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) and OJS while the the code is written as open as possible for any system that can deploy Rest API that provides online authoring and  intends to benefit from a workflow managment system.
 
 ##Installation:
 #####1.First step
@@ -21,21 +26,44 @@ An installation of OJS is needed. To install OJS please followup its readme in h
 To have its latest version please check out the master branch.
 
 #####2.Second step
-Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder of OJS.
-Create the folder if it does not exist.
+Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder inside your OJS folder.
+Create the folder if it does not exist. You can achieve this by running these commands:
 
+```
+cd plugins/generic/
+git clone https://github.com/OSCOSS/OJSIntegrationRestAPIplugin.git
+mv OJSIntegrationRestAPIplugin ojsIntegrationRestAPI
+cd ../..
+```
 
 Then, run the upgrade script to register the plugin with the system by running:
-php tools/upgrade.php upgrade
-#####3.To Activate:
-Enable the plugin via the interface:
 
-Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" in the routs below:
+```
+php tools/upgrade.php upgrade
+```
+
+#####3.To Activate on the OJS end:
+Enable the plugin via the OJS website interface:
+
+Make sure you have set up at least one journal on your site. Otherwise the settings menu does not show.
+
+Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" under the following routes:
 
  in OJS 3.0 :
+ 
  setting > website > plugins
- in OJS < 3.0:
+
+in OJS < 3.0:
+ 
 Home > User > Journal Management > Plugin Management
+
+#####4.To Activate on the Editor end:
+
+Set the OJS_URL to the base URL of your OJS installation (for example: "http://www.myojssite.com").
+
+Set the OJS_KEY to "d5PW586jwefjn!3fv".
+
+In the case of Fidus Writer, these settings are in the configuration.php file in the section SERVER_INFO.
 
 ##Documentation
 

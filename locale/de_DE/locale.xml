@@ -8,6 +8,6 @@
   -->
 <locale name="de_DE" full_name="Deutsch (Deutschland)">
 	<message key="plugins.generic.ojsIntegrationRestApi.displayName">OJS REST API Integration Plugin</message>
-	<message key="plugins.generic.ojsIntegrationRestApi.description">Dieses Plugin bietet Erholung API Endpunkte OJS und Authoring-Tools wie ein integriertes System zu verwenden.</message>
+	<message key="plugins.generic.ojsIntegrationRestApi.description">Dieses Plugin bietet REST API Endpunkte um OJS und Auorentools als ein integriertes System zu verwenden.</message>
 	<message key="plugins.generic.ojsIntegrationRestApi.settings">Einstellungen</message>
 </locale>

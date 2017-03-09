@@ -826,7 +826,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($email == Null) {
             echo "Error: user is not logged in"; //todo make error handling
         }
-        $url = $this->atURL . '/document/documentReview/';
+        $url = $this->atURL . '/ojs/documentReview/';
         $userName = $this->getLoggedInUserNameFromSession();
         $data = array('key' => $sharedKey,
             'email' => $email,
@@ -963,4 +963,3 @@ class RestApiGatewayPlugin extends GatewayPlugin
     }
 
 }
-

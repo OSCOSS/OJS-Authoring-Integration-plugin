@@ -120,7 +120,7 @@ class IntegrationApiPlugin extends GenericPlugin
             'doc_id' => $documentId,
             'user_name' => $userName];
         $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/document/reviewer/';
+        $url = $this->atURL . '/ojs/reviewer/';
 
         error_log("MOINMOINAddreviewer: " . $documentId."---". $email, 0);
 
@@ -160,7 +160,7 @@ class IntegrationApiPlugin extends GenericPlugin
         //Then send the email address of reviewer to authoring tool.
         // AT must give review aceess to this article with the submission id
         $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/document/delReviewer/';
+        $url = $this->atURL . '/ojs/delReviewer/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -203,7 +203,7 @@ class IntegrationApiPlugin extends GenericPlugin
         //Then send the email address of reviewer to authoring tool.
         // AT must give review aceess to this article with the submission id
         $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/document/newsubmissionrevision/';
+        $url = $this->atURL . '/ojs/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
         //error_log("MOINMOIN:" . var_export($dataArray, true), 0);
         //error_log("newRevisionWeBHook_result" . $result, 0);

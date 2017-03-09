@@ -173,9 +173,8 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         break;
                     case 'documentReview':
                         // Here I convert Local command in form of GET from browser to Remote Host Command by Server in for of POST
-                        $redirect_url = $_GET['article_url'];
-                        $documentId = $this->getDocumentIdFromURL($redirect_url);
-                        $status = $this->loginAuthoringTool($documentId);
+                        $article_url = $_GET['article_url'];
+                        $status = $this->loginAuthoringTool($article_url);
                         #echo $status;
                         /*if (!$status) {
                             $response = array(
@@ -816,23 +815,21 @@ class RestApiGatewayPlugin extends GatewayPlugin
     }
 
     /**
-     * @param $documentId
+     * @param $revUrl
      * @return string
      */
-    private function loginAuthoringTool($documentId)
+    private function loginAuthoringTool($article_url)
     {
         $sharedKey = $this->sharedKey;
         $email = $this->getLoggedInUserEmailFromSession();
         if ($email == Null) {
             echo "Error: user is not logged in"; //todo make error handling
         }
-        $url = $this->atURL . '/ojs/documentReview/';
         $userName = $this->getLoggedInUserNameFromSession();
         $data = array('key' => $sharedKey,
             'email' => $email,
-            'doc_id' => $documentId,
             'user_name' => $userName);
-        return $this->sendPostRequestAndJump($url, $data);
+        return $this->sendPostRequestAndJump($article_url, $data);
     }
 
     /**
@@ -897,16 +894,6 @@ class RestApiGatewayPlugin extends GatewayPlugin
         return $userName;
     }
 
-    /**
-     * @param $articleURL
-     * @return mixed
-     */
-    private function getDocumentIdFromURL($articleURL)
-    {
-        $matches = explode('/document/', $articleURL);
-        $documentId = $matches[1];
-        return $documentId;
-    }
 
     /**
      * @param $editorMessageCommentText

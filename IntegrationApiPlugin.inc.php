@@ -160,7 +160,7 @@ class IntegrationApiPlugin extends GenericPlugin
         //Then send the email address of reviewer to authoring tool.
         // AT must give review aceess to this article with the submission id
         $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/ojs/delReviewer/';
+        $url = $this->atURL . '/ojs/reviewer/del/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }

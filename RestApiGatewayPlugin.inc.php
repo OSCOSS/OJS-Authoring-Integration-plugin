@@ -30,14 +30,10 @@ class RestApiGatewayPlugin extends GatewayPlugin
     private $APIVersion;
     /** @var string */
     private $defaultLocale;
-    /** @var string authoring tool URL address */
-    private $atURL;
     /** @var string shared key to send request to AT */
     private $sharedKey;
     /**  @var string current plugin URL */
     private $pluginURL;
-    /** @var string */
-    private $OJSURL;
 
     public function RestApiGatewayPlugin($parentPluginName)
     {
@@ -45,12 +41,26 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $this->parentPluginName = $parentPluginName;
         $this->APIVersion = "1.0";
         $this->defaultLocale = AppLocale::getLocale();
+        $OJSURL = $this->getSiteUrl()
+        $this->pluginURL = $OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
         //todo: this should be get from user in plugin installation time
-        $this->atURL = 'http://localhost:8100';
-        $this->OJSURL = 'http://localhost:8000';//todo:get it from session
-        $this->pluginURL = $this->OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
         $this->sharedKey = "d5PW586jwefjn!3fv";
     }
+
+
+    /***
+     * Get the url of the current site.
+     */
+    public function getSiteUrl()
+    {
+        $protocol = empty($_SERVER['HTTPS']) ? 'http' : 'https';
+        $domain = $_SERVER['SERVER_NAME'];
+        $port = $_SERVER['SERVER_PORT'];
+        $port_str = ($protocol == 'http' && $port == 80 || $protocol == 'https' && $port == 443) ? '' : ":$port";
+
+        return "${protocol}://${domain}${port_str}";
+    }
+
 
     /**
      * Hide this plugin from the management interface (it's subsidiary)
@@ -536,6 +546,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
             throw new Exception("Error: no submission with given submissionId $submissionId exists");
         }
         $singleSignOnURL = $this->makeSingleSignOnURLForRevision($submission->getTitle($this->defaultLocale), $version_num);
+
         /** @var ArticleDAO $submissionDao * */
         $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $singleSignOnURL], 'string', True);
         $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $singleSignOnURL], 'string', True);

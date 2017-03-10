@@ -19,7 +19,6 @@ class IntegrationApiPlugin extends GenericPlugin
 {
 
     /** @var string authoring tool URL address */
-    private $atURL;
     protected $sharedKey;
 
     /**
@@ -114,13 +113,12 @@ class IntegrationApiPlugin extends GenericPlugin
         //array_keys(submitionID" . $row[0], 0);
         $userName = $this->getUserName($reviewerId);
         $round = ($row[4]);
-        $documentId = $this->getDocumentIdFromSubmissionId($submissionId, $round);
+        $docData = $this->getDocData($submissionId, $round);
         //error_log("MOINMOINdocumentId ->>>>>>>>>>>>>" . $documentId, 0);
         $dataArray = ['email' => $email,
-            'doc_id' => $documentId,
+            'rev_id' => $docData['rev_id'],
             'user_name' => $userName];
-        $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/ojs/reviewer/';
+        $url = $docData['base_url'] . '/ojs/reviewer/';
 
         error_log("MOINMOINAddreviewer: " . $documentId."---". $email, 0);
 
@@ -149,18 +147,17 @@ class IntegrationApiPlugin extends GenericPlugin
         /** @var ReviewAssignment $reviewAssignmentObject */
         $reviewAssignmentObject = $RADao->getById($reviewId);
         $round = $reviewAssignmentObject->getRound();
-        $documentId = $this->getDocumentIdFromSubmissionId($submissionId, $round);
+        $docData = $this->getDocData($submissionId, $round);
         $userName = $this->getUserNameByReviewID($reviewId);
         //error_log("reviewer email: " . $email);
         //error_log("SubmissionId: " . $submissionId);
         //error_log("documentId: " . $documentId);
         $dataArray = ['email' => $email,
-            'doc_id' => $documentId,
+            'rev_id' => $docData['rev_id'],
             'user_name' => $userName];
         //Then send the email address of reviewer to authoring tool.
         // AT must give review aceess to this article with the submission id
-        $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/ojs/reviewer/del/';
+        $url = $docData['base_url'] . '/ojs/reviewer/del/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -173,7 +170,6 @@ class IntegrationApiPlugin extends GenericPlugin
      */
     function newRevisionWeBHook($hookname, $args)
     {
-
 
         $revisionReqArr =& $args[1];
         $submissionId = $revisionReqArr[0];
@@ -201,9 +197,9 @@ class IntegrationApiPlugin extends GenericPlugin
             'submission_id' => $submissionId,
             'round' => $round];  //editor user for logging in
         //Then send the email address of reviewer to authoring tool.
-        // AT must give review aceess to this article with the submission id
-        $this->atURL = 'http://localhost:8100';
-        $url = $this->atURL . '/ojs/newsubmissionrevision/';
+        // AT must give review access to this article with the submission id
+        $docData = this->getDocData($submissionId, $round-1)
+        $url = $docData['base_url'] . '/ojs/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
         //error_log("MOINMOIN:" . var_export($dataArray, true), 0);
         //error_log("newRevisionWeBHook_result" . $result, 0);
@@ -387,44 +383,45 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $round
      * @return mixed
      */
-    private function getDocumentIdFromSubmissionId($submissionId, $round)
+    private function getDocData($submissionId, $round)
     {
         $submissionDao = Application::getSubmissionDAO();
         /** @var Submission */
         $submission = $submissionDao->getById($submissionId);
         $submissionTitle = $submission->getTitle(AppLocale::getLocale());
-        $documentId = 0;
         $submissionArrayInString= [];
-        $submissionInString= [];
+        $submissionInString = [];
         $matches = explode('"', $submissionTitle);
         $count = count($matches);
         for ($counter = 0; $counter < $count -1 ; $counter++ ) {
-            $position = strpos($matches[$counter], "document/");
+            $position = strpos($matches[$counter], "/ojs/revision/");
             if ($position !== FALSE) {
-                $match1 = explode('document/', $matches[$counter]);
-                $match1 = $match1[1];
-                $match2 = explode('>Round', $matches[$counter + 1]);
-                if(is_array($match2)){
-                    if(count($match2) ===2){
-                        $match2 = explode('</a>', $match2[1]);
-                        $match2 = $match2[0];
-                        $match2 = str_replace(' ', '', $match2);
+                $url_match = explode('/ojs/revision/', $matches[$counter]);
+                $base_url = $url_match[0];
+                $rev_id = $url_match[1];
+                $after_url_match = explode('>Round', $matches[$counter + 1]);
+                if(is_array($after_url_match)){
+                    if(count($after_url_match) === 2){
+                        $round_match = explode('</a>', $after_url_match[1]);
+                        $round = $round_match[0];
+                        $round = str_replace(' ', '', $round);
 
-                    }else{
-                        $match2 = "1";
+                    } else {
+                        $round = "1";
                     }
                 }
-                $submissionInString['doc_id']= $match1;
-                $submissionInString['round']= $match2;
+                $submissionInString['base_url']= $base_url;
+                $submissionInString['rev_id']= $rev_id;
+                $submissionInString['round']= $round;
                 $submissionArrayInString[]= $submissionInString;
             }
         }
         foreach ($submissionArrayInString as $subInString){
             if($subInString['round'] == $round){
-                $documentId =  $subInString['doc_id'];
+                $docData = $subInString;
             }
         }
-        return $documentId;
+        return $docData;
     }
 
     /**

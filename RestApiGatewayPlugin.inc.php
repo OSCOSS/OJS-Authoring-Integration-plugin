@@ -208,7 +208,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
                             "journal_id" => $resultArray["journalId"],
-                            "user_Id" => $resultArray["userId"],
+                            "user_id" => $resultArray["userId"],
                             "version" => $this->APIVersion
                         );
                         $this->sendJsonResponse($response);
@@ -218,7 +218,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
                         $resultArray = $this->saveArticleReview();
                         $response = array(
                             "journal_id" => $resultArray["journalId"],
-                            "user_Id" => $resultArray["userId"],
+                            "user_id" => $resultArray["userId"],
                             "version" => $this->APIVersion
                         );
                         $this->sendJsonResponse($response);

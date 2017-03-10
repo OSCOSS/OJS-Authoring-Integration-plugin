@@ -203,7 +203,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
 
                         break;
                     case 'articles':
-                        // in case author submits and article
+                        // in case author submits an article
                         $resultArray = $this->saveArticleWithAuthor();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
@@ -420,7 +420,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         if ($submission_id !== "" && $version_id !== "") {
 
             $submissionId = $submission_id;
-            $this->updateArticleSubmissionBySecondArticleSubmit($submissionId, $version_id);
+            $this->updateArticleSubmission($submissionId, $version_id);
         } else {
             $submissionId = $this->saveNewArticleSubmission();
             $emailAddress = $this->getPOSTPayloadVariable("email");
@@ -525,7 +525,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
      * @return Submission
      * @throws Exception
      */
-    private function updateArticleSubmissionBySecondArticleSubmit($submissionId, $version_num)
+    private function updateArticleSubmission($submissionId, $version_num)
     {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);

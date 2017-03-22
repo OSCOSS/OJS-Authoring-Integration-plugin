@@ -198,7 +198,7 @@ class IntegrationApiPlugin extends GenericPlugin
             'round' => $round];  //editor user for logging in
         //Then send the email address of reviewer to authoring tool.
         // AT must give review access to this article with the submission id
-        $docData = this->getDocData($submissionId, $round-1)
+        $docData = $this->getDocData($submissionId, $round-1);
         $url = $docData['base_url'] . '/ojs/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
         //error_log("MOINMOIN:" . var_export($dataArray, true), 0);

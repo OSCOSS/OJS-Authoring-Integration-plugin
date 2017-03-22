@@ -41,7 +41,7 @@ class RestApiGatewayPlugin extends GatewayPlugin
         $this->parentPluginName = $parentPluginName;
         $this->APIVersion = "1.0";
         $this->defaultLocale = AppLocale::getLocale();
-        $OJSURL = $this->getSiteUrl()
+        $OJSURL = $this->getSiteUrl();
         $this->pluginURL = $OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
         //todo: this should be get from user in plugin installation time
         $this->sharedKey = "d5PW586jwefjn!3fv";

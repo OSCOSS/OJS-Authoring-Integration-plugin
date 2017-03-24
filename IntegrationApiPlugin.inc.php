@@ -15,8 +15,7 @@ import('lib.pkp.classes.submission.SubmissionDAO');
  * Date: 13/06/16
  * Time: 14:44
  */
-class IntegrationApiPlugin extends GenericPlugin
-{
+class IntegrationApiPlugin extends GenericPlugin {
 
     /** @var string authoring tool URL address */
     protected $sharedKey;
@@ -26,8 +25,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * creation.
      * @return string
      */
-    function getContextSpecificPluginSettingsFile()
-    {
+    function getContextSpecificPluginSettingsFile() {
         return $this->getPluginPath() . '/settings.xml';
     }
 
@@ -35,8 +33,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * Override the builtin to get the correct template path.
      * @return string
      */
-    function getTemplatePath()
-    {
+    function getTemplatePath() {
         return parent::getTemplatePath() . 'templates/';
     }
 
@@ -45,8 +42,7 @@ class IntegrationApiPlugin extends GenericPlugin
      *
      * @return string
      */
-    function getDisplayName()
-    {
+    function getDisplayName() {
         return __('plugins.generic.ojsIntegrationRestApi.displayName');
 
     }
@@ -56,8 +52,7 @@ class IntegrationApiPlugin extends GenericPlugin
      *
      * @return string
      */
-    function getDescription()
-    {
+    function getDescription() {
         return __('plugins.generic.ojsIntegrationRestApi.description');
 
     }
@@ -66,8 +61,7 @@ class IntegrationApiPlugin extends GenericPlugin
     /**
      * @see Plugin::isSitePlugin()
      */
-    function isSitePlugin()
-    {
+    function isSitePlugin() {
         return true;
     }
 
@@ -76,16 +70,15 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $path
      * @return bool
      */
-    function register($category, $path)
-    {
+    function register($category, $path) {
 
 
         if (parent::register($category, $path)) {
             if ($this->getEnabled()) {
                 HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
-                HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'registerReviewerWeBHook'));
-                HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'removeReviewerWeBHook'));
-                HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWeBHook'));
+                HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'registerReviewerWebHook'));
+                HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'removeReviewerWebHook'));
+                HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
 
                 // HookRegistry::register ('TemplateManager::display', array($this, 'editReviewerTitle'));
             }
@@ -100,21 +93,16 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $args
      * @return bool
      */
-    function registerReviewerWeBHook($hookName, $args)
-    {
+    function registerReviewerWebHook($hookName, $args) {
 
         $reviewAssignment =& $args[0];
         $row =& $args[1];
-        //error_log("MOINMOINloggingRegister:" . $reviewAssignment, 0);
         $submissionId = $row[0];
         $reviewerId = $row[1];
         $email = $this->getUserEmail($reviewerId);
-        //error_log("MOINMOINemail: " . $email, 0);
-        //array_keys(submitionID" . $row[0], 0);
         $userName = $this->getUserName($reviewerId);
         $round = ($row[4]);
         $docData = $this->getDocData($submissionId, $round);
-        //error_log("MOINMOINdocumentId ->>>>>>>>>>>>>" . $documentId, 0);
         $dataArray = ['email' => $email,
             'rev_id' => $docData['rev_id'],
             'user_name' => $userName];
@@ -133,13 +121,9 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $args
      * @return bool
      */
-    function removeReviewerWeBHook($hookName, $args)
-    {
+    function removeReviewerWebHook($hookName, $args) {
 
-        //$reviewAssignment =& $args[0];
         $reviewId =& $args[1];
-        #error_log("loggingRemoveReviewer:" . $reviewAssignment, 0);
-        #error_log($reviewId, 0);
         $email = $this->getUserEmailByReviewID($reviewId);
         $submissionId = $this->getSubmissionIdByReviewID($reviewId);
         /** @var ReviewAssignmentDAO $RADao */
@@ -149,14 +133,11 @@ class IntegrationApiPlugin extends GenericPlugin
         $round = $reviewAssignmentObject->getRound();
         $docData = $this->getDocData($submissionId, $round);
         $userName = $this->getUserNameByReviewID($reviewId);
-        //error_log("reviewer email: " . $email);
-        //error_log("SubmissionId: " . $submissionId);
-        //error_log("documentId: " . $documentId);
         $dataArray = ['email' => $email,
             'rev_id' => $docData['rev_id'],
             'user_name' => $userName];
-        //Then send the email address of reviewer to authoring tool.
-        // AT must give review aceess to this article with the submission id
+        // Then send the email address of reviewer to authoring tool.
+        // AT must give review aceess to this article with the submission id.
         $url = $docData['base_url'] . '/ojs/reviewer/del/';
         $this->sendPostRequest($url, $dataArray);
         return false;
@@ -168,25 +149,19 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $hookname
      * @param $args
      */
-    function newRevisionWeBHook($hookname, $args)
-    {
+    function newRevisionWebHook($hookname, $args) {
 
         $revisionReqArr =& $args[1];
         $submissionId = $revisionReqArr[0];
-        //$stage_id = $revisionReqArr[1];
         $round = $revisionReqArr[2];
-        //$status = $revisionReqArr[3];
-        //error_log("newRevisionWeBHook1" . $submissionId, 0);  //example: 74, 3, 5, 6
-        //error_log("newRevisionWeBHook2". $stage_id,0);
-        //error_log("newRevisionWeBHook3". $round,0);
-        //error_log("newRevisionWeBHook4". $status,0);
 
         $this->sharedKey = "d5PW586jwefjn!3fv";
-        //error_log("MOINMOIN:" . var_export($revisionReqArr, true), 0);
         if($round == "1") return;
-        if (is_null($submissionId)) return;   //it means its round 0 and no reviewer is assigned yet
+        // If $submissionId is 0, it is round 0 and no reviewer is assigned yet
+        if (is_null($submissionId)) return;
         $authorEmail = $this->getAuthorEmailBySubmissionId($submissionId);
-        if (is_null($authorEmail)) return;   //it means its round 0 and no reviewer is assigned yet
+        // If $submissionId is 0, it is round 0 and no reviewer is assigned yet
+        if (is_null($authorEmail)) return;
         $userName = $this->getAuthorUserNameBySubmissionId($submissionId);
 
 
@@ -196,14 +171,11 @@ class IntegrationApiPlugin extends GenericPlugin
             'key' => $this->sharedKey, //shared key between OJS and Editor software
             'submission_id' => $submissionId,
             'round' => $round];  //editor user for logging in
-        //Then send the email address of reviewer to authoring tool.
+        // Then send the email address of reviewer to authoring tool.
         // AT must give review access to this article with the submission id
         $docData = $this->getDocData($submissionId, $round-1);
         $url = $docData['base_url'] . '/ojs/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
-        //error_log("MOINMOIN:" . var_export($dataArray, true), 0);
-        //error_log("newRevisionWeBHook_result" . $result, 0);
-
     }
 
     /**
@@ -211,8 +183,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $args array
      * @return bool
      **/
-    function callbackLoadCategory($hookName, $args)
-    {
+    function callbackLoadCategory($hookName, $args) {
         $category =& $args[0];
         $plugins =& $args[1];
         switch ($category) {
@@ -230,8 +201,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $userId
      * @return string
      */
-    private function getUserEmail($userId)
-    {
+    private function getUserEmail($userId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         return $userDao->getUserEmail($userId);
@@ -241,8 +211,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $userId
      * @return string
      */
-    private function getUserName($userId)
-    {
+    private function getUserName($userId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignment $reviewAssignment */
@@ -255,8 +224,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $reviewId
      * @return mixed
      */
-    private function getUserEmailByReviewID($reviewId)
-    {
+    private function getUserEmailByReviewID($reviewId) {
         /** @var UserDAO $userDao **/
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
@@ -272,8 +240,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $reviewId
      * @return mixed
      */
-    private function getUserNameByReviewID($reviewId)
-    {
+    private function getUserNameByReviewID($reviewId) {
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -292,8 +259,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $reviewId
      * @return int
      */
-    private function getSubmissionIdByReviewID($reviewId)
-    {
+    private function getSubmissionIdByReviewID($reviewId) {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
@@ -313,13 +279,12 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $data_array
      * @return string
      */
-    private function sendRequest($requestType, $url, $data_array)
-    {
+    private function sendRequest($requestType, $url, $dataArray) {
         $options = array(
             'http' => array(
                 'header' => "Content-type: application/x-www-form-urlencoded\r\n",
                 'method' => $requestType,
-                'content' => http_build_query($data_array)
+                'content' => http_build_query($dataArray)
             )
         );
         $context = stream_context_create($options);
@@ -333,44 +298,28 @@ class IntegrationApiPlugin extends GenericPlugin
 
     /**
      * @param $url
-     * @param $data_array
+     * @param $dataArray
      * @return string
      */
-    private function sendPutRequest($url, $data_array)
-    {
-        /**
-         * error_log("sending put request: ", 0);
-         * error_log($url, 0);
-         * foreach ($data_array as $a => $b) {
-         * error_log($a . '--->' . $b, 0);
-         * }*/
-        $result = $this->sendRequest('PUT', $url, $data_array);
+    private function sendPutRequest($url, $dataArray) {
+        $result = $this->sendRequest('PUT', $url, $dataArray);
         return $result;
     }
 
     /**
      * @param $url
-     * @param $data_array
+     * @param $dataArray
      * @return string
      */
-    private function sendPostRequest($url, $data_array)
-    {
-        /**
-         * error_log("sending post request: ", 0);
-         * error_log($url, 0);
-         * foreach ($data_array as $a => $b) {
-         * error_log($a . '--->' . $b, 0);
-         * }
-         * */
-        $result = $this->sendRequest('POST', $url, $data_array);
+    private function sendPostRequest($url, $dataArray) {
+        $result = $this->sendRequest('POST', $url, $dataArray);
         return $result;
     }
 
     /**
      * @return User/Null
      */
-    private function getUserFromSession()
-    {
+    private function getUserFromSession() {
         $sessionManager = SessionManager::getManager();
         $userSession = $sessionManager->getUserSession();
         $user = $userSession->getUser();
@@ -383,8 +332,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $round
      * @return mixed
      */
-    private function getDocData($submissionId, $round)
-    {
+    private function getDocData($submissionId, $round) {
         $submissionDao = Application::getSubmissionDAO();
         /** @var Submission */
         $submission = $submissionDao->getById($submissionId);
@@ -396,22 +344,22 @@ class IntegrationApiPlugin extends GenericPlugin
         for ($counter = 0; $counter < $count -1 ; $counter++ ) {
             $position = strpos($matches[$counter], "/ojs/revision/");
             if ($position !== FALSE) {
-                $url_match = explode('/ojs/revision/', $matches[$counter]);
-                $base_url = $url_match[0];
-                $rev_id = $url_match[1];
-                $after_url_match = explode('>Round', $matches[$counter + 1]);
-                if(is_array($after_url_match)){
-                    if(count($after_url_match) === 2){
-                        $round_match = explode('</a>', $after_url_match[1]);
-                        $round = $round_match[0];
+                $urlMatch = explode('/ojs/revision/', $matches[$counter]);
+                $baseUrl = $urlMatch[0];
+                $revId = $urlMatch[1];
+                $afterUrlMatch = explode('>Round', $matches[$counter + 1]);
+                if(is_array($afterUrlMatch)){
+                    if(count($afterUrlMatch) === 2){
+                        $roundMatch = explode('</a>', $afterUrlMatch[1]);
+                        $round = $roundMatch[0];
                         $round = str_replace(' ', '', $round);
 
                     } else {
                         $round = "1";
                     }
                 }
-                $submissionInString['base_url']= $base_url;
-                $submissionInString['rev_id']= $rev_id;
+                $submissionInString['base_url']= $baseUrl;
+                $submissionInString['rev_id']= $revId;
                 $submissionInString['round']= $round;
                 $submissionArrayInString[]= $submissionInString;
             }
@@ -428,8 +376,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $submissionId
      * @return mixed
      */
-    private function getReviewerEmailBySubmissionId($submissionId)
-    {
+    private function getReviewerEmailBySubmissionId($submissionId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
@@ -456,8 +403,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $submissionId
      * @return string
      */
-    private function getReviewerUserNameBySubmissionId($submissionId)
-    {
+    private function getReviewerUserNameBySubmissionId($submissionId) {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
@@ -481,8 +427,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $submissionId
      * @return mixed
      */
-    private function getAuthorEmailBySubmissionId($submissionId)
-    {
+    private function getAuthorEmailBySubmissionId($submissionId) {
         error_log("submissionId: ". $submissionId,0);
 
         /** @var AuthorDao $authorDao */
@@ -504,8 +449,7 @@ class IntegrationApiPlugin extends GenericPlugin
      * @param $submissionId
      * @return string
      */
-    private function getAuthorUserNameBySubmissionId($submissionId)
-    {
+    private function getAuthorUserNameBySubmissionId($submissionId) {
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         $authors = $authorDao->getBySubmissionId($submissionId);

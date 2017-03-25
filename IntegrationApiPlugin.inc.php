@@ -276,7 +276,7 @@ class IntegrationApiPlugin extends GenericPlugin {
     /**
      * @param $requestType
      * @param $url
-     * @param $data_array
+     * @param $dataArray
      * @return string
      */
     private function sendRequest($requestType, $url, $dataArray) {
@@ -289,7 +289,7 @@ class IntegrationApiPlugin extends GenericPlugin {
         );
         $context = stream_context_create($options);
         $result = file_get_contents($url, false, $context);
-        if ($result === FALSE) { /* Handle error */
+        if ($result === false) { /* Handle error */
             echo $result;
         }
         return $result;
@@ -343,7 +343,7 @@ class IntegrationApiPlugin extends GenericPlugin {
         $count = count($matches);
         for ($counter = 0; $counter < $count -1 ; $counter++ ) {
             $position = strpos($matches[$counter], "/ojs/revision/");
-            if ($position !== FALSE) {
+            if ($position !== false) {
                 $urlMatch = explode('/ojs/revision/', $matches[$counter]);
                 $baseUrl = $urlMatch[0];
                 $revId = $urlMatch[1];

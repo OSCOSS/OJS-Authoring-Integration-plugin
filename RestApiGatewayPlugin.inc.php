@@ -159,10 +159,13 @@ class RestApiGatewayPlugin extends GatewayPlugin {
                         $this->sendJsonResponse($response);
                         break;
                     case 'documentReview':
-                        // Turn the request for documentReview into a request on
-                        // the remote host with login credentials.
-                        $articleUrl = $_GET['article_url'];
-                        $this->loginAuthoringTool($articleUrl);
+                        // Forward the user to the editor logged in with
+                        // appropriate rights.
+                        $editorUrl = $_GET['editor_url'];
+                        $editorRevisionId = $_GET['editor_revision_id'];
+                        $submissionId = intval($_GET['submission_id']);
+                        $version = $_GET['version'];
+                        $this->loginEditor($editorUrl, $editorRevisionId, $submissionId, $version);
                         break;
                     default:
                         $error = "OJS Integration REST Plugin: Not a valid GET request";
@@ -311,6 +314,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     }
 
     /**
+     * Return a list of journals hosted at this installation.
      * @return array
      */
     private function getJournals() {
@@ -352,7 +356,8 @@ class RestApiGatewayPlugin extends GatewayPlugin {
 
 
         /** Submission */
-        $submission->setContextId($journalId); // TODO: should this not be the contextId isntead?
+        // $journalId in OJS is same as $contextId in PKP lib.
+        $submission->setContextId($journalId);
         $submission->setDateSubmitted(Core::getCurrentDate());
 
         $submission->setLocale($this->defaultLocale);
@@ -370,25 +375,27 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @return array
      */
     private function saveArticleWithAuthor() {
-
+        // Get all the variables used both when saving and updating submissions.
+        $editorUrl = $this->getPOSTPayloadVariable("editor_url");
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
-        $versionId = $this->getPOSTPayloadVariable("version_id");
+        $editorRevisionId = $this->getPOSTPayloadVariable("editor_revision_id");
+        $version = $this->getPOSTPayloadVariable("version");
+        $title = $this->getPOSTPayloadVariable("title");
         $journalId = 0;
         $userId = 0;
-        $articleUrl = $this->getPOSTPayloadVariable("article_url");
-        if ($submissionId !== "" && $versionId !== "") {
-            $this->updateArticleSubmission($articleUrl, $submissionId, $versionId);
+        if ($submissionId !== "") {
+            $this->updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version);
         } else {
-            $title = $this->getPOSTPayloadVariable("title");
             $journalId = $this->getPOSTPayloadVariable("journal_id");
             $filename = $this->getPOSTPayloadVariable("file_name");
-            $submissionId = $this->saveNewArticleSubmission($articleUrl, $title, $journalId, $filename);
+            $submissionId = $this->saveNewArticleSubmission($editorUrl, $title, $editorRevisionId, $journalId, $filename);
+
             $emailAddress = $this->getPOSTPayloadVariable("email");
             $firstName = $this->getPOSTPayloadVariable("first_name");
             $lastName = $this->getPOSTPayloadVariable("last_name");
-
             $user = $this->getOrCreateUser($emailAddress, $firstName, $lastName);
             $userId = $user->getId();
+
             //check if author exist in db
             $affiliation = $this->getPOSTPayloadVariable("affiliation");
             $country = $this->getPOSTPayloadVariable("country");
@@ -398,7 +405,10 @@ class RestApiGatewayPlugin extends GatewayPlugin {
 
             // Assign the user author to the stage
             $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
-            $stageAssignmentDao->build($submissionId, $this->getAuthorUserGroupId($journalId), $userId);
+            $authorUserGroupId =  $this->getAuthorUserGroupId($journalId);
+            if ($authorUserGroupId) {
+                $stageAssignmentDao->build($submissionId, $authorUserGroupId, $userId);
+            }
         }
 
         $resultArray = array(
@@ -410,48 +420,41 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     }
 
     /**
-     * @param $articleUrl
+     * Creates a link that is set on the title of the submission. Clicking the
+     * link will make the user be sent to the editor and be logged in there.
+     * @param $editorUrl
      * @param $title
+     * @param $submissionId
+     * @param $editorRevisionId
+     * @param $version
      * @return string
      */
-    private function makeInitialSignInURL($articleUrl, $title) {
-        $signInUrl = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
-        $linkToOJS = '<a href="' . $signInUrl . '">Open : ' . $title . '</a>';
-        return $linkToOJS;
-    }
-
-    /**
-     * @param $oldTitle
-     * @param $versionNum
-     * @return string
-     */
-    private function makeSubsequentSignInURL($articleUrl, $oldTitle, $versionNum) {
-        $oldLinkToOJS = $oldTitle;
-        $singleSignOnUrl = $this->pluginURL . '/documentReview?article_url=' . $articleUrl;
-        $round = ($versionNum +1 )/2;
-        $linkToOJS = $oldLinkToOJS . ' &nbsp;<a href="' . $singleSigOnUrl . '">Round ' . $round . '</a>';
+    private function makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, $version) {
+        $signInUrl = $this->pluginURL . '/documentReview?editor_url=' . $editorUrl . '&submission_id=' . $submissionId . '&editor_revision_id=' . $editorRevisionId . '&version=' . $version;
+        $round = $version + 1;
+        $linkToOJS = $title . '<a href="' . $signInUrl . '"> Round ' . $round .'</a>';
         return $linkToOJS;
     }
 
     /**
      * @return mixed
      */
-    private function saveNewArticleSubmission($articleUrl, $title, $journalId, $filename) {
+    private function saveNewArticleSubmission($editorUrl, $title, $editorRevisionId, $journalId, $filename) {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->newDataObject();
         $submission->setStatus(STATUS_QUEUED);
         $submission->setSubmissionProgress(0);
         $submission = $this->setArticleSubmissionVariables($submission, $journalId, $filename, $title);
-        $linkToOJS = $this->makeInitialSignInURL($articleUrl, $title);
-        $submission->setTitle($linkToOJS, $this->defaultLocale);
-        $submission->setCleanTitle($linkToOJS, $this->defaultLocale);
-        $workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
+        //$workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
         //  $submission->setStageId(WorkflowStageDAO::getIdFromPath($node->getAttribute('stage')));
-        $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);  // WORKFLOW_STAGE_ID_SUBMISSION value is equal to 1 in our first journal test
+        // WORKFLOW_STAGE_ID_SUBMISSION is the stage a submission is in right
+        // when it is first submitted (== 1 in database).
+        $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);
         //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
 
-        // Sections are different parts of a journal,
-        // Later we can extend the api to select which section to submit, the default section is articles.
+        // Sections are different parts of a journal, we only allow submission
+        // to the default section ('Articles').
+        // TODO: Extend the api to select which section to submit to.
         // https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementJournalSections.html
         $sectionDao = Application::getSectionDAO();
         $section = $sectionDao->getByTitle("Articles", $journalId, $this->defaultLocale);
@@ -463,6 +466,18 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         $submission->setData("sectionId", $sectionId);
         // Insert the submission
         $submissionId = $submissionDao->insertObject($submission);
+
+        // We first save the submission so that we get an ID for it. We need
+        // this ID for the link in the title, so after saving we update the title
+        // (which will cause another save).
+        $signInURL = $this->makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, 0);
+
+        $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $signInURL], 'string', True);
+        $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $sigInURL], 'string', True);
+
+        //$submission->setTitle($linkToEditor, $this->defaultLocale);
+        //$submission->setCleanTitle($linkToEditor, $this->defaultLocale);
+
         return $submissionId;
     }
 
@@ -473,7 +488,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @return Submission
      * @throws Exception
      */
-    private function updateArticleSubmission($articleUrl, $submissionId, $versionNum) {
+    private function updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version) {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
         //error_log("MOINMOIN0:" . var_export([$submissionId,$versionNum, $submission], true), 0);
@@ -481,12 +496,12 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         if ($submission === NUll || $submission === "") {
             throw new Exception("Error: no submission with given submissionId $submissionId exists");
         }
-        $oldTitle = $submission->getTitle($this->defaultLocale);
-        $singleSignOnURL = $this->makeSubsequentSignInURL($articleUrl, $oldTitle, $versionNum);
+
+        $signInURL = $this->makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, $version);
 
         /** @var ArticleDAO $submissionDao * */
-        $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $singleSignOnURL], 'string', True);
-        $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $singleSignOnURL], 'string', True);
+        $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $signInURL], 'string', True);
+        $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $sigInURL], 'string', True);
     }
 
     /**
@@ -495,7 +510,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @throws Exception
      */
     private function saveArticleReview() {
-        $journalId = $this->getPOSTPayloadVariable("journal_id"); //same as $contextId
+        $journalId = $this->getPOSTPayloadVariable("journal_id");
         if ($journalId === NULL || $journalId === "") {
             throw new Exception("Error: journal_id is not set or is empty in the header");
         }
@@ -510,7 +525,9 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         if ($submission === NUll || $submission === "") {
             throw new Exception("Error: no submission with given submissionId $submissionId exists");
         }
-        $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);  // WORKFLOW_STAGE_ID_INTERNAL_REVIEW value is equal to 2 from interface iPKPApplicationInfoProvider
+        // WORKFLOW_STAGE_ID_INTERNAL_REVIEW is the stage a submission is in
+        // during the internal peer review process (== 2 in database).
+        $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);
 
         $emailAddress = $this->getPOSTPayloadVariable("email");
         if ($emailAddress === NULL || $emailAddress === "") {
@@ -607,11 +624,13 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         $author->setEmail($emailAddress);
         $author->setUrl($authorUrl);
         $author->setBiography($biography, $this->defaultLocale);
-        $author->setPrimaryContact(1);
-        $author->setIncludeInBrowse(1);
+        $author->setPrimaryContact(true);
+        $author->setIncludeInBrowse(true);
 
         $authorUserGroup = $this->getAuthorUserGroupId($journalId);
-        $author->setUserGroupId($authorUserGroup);
+        if ($authorUserGroup) {
+            $author->setUserGroupId($authorUserGroup);
+        }
         $author->setSubmissionId($articleId);
 
         $authorId = $authorDao->insertObject($author);
@@ -628,8 +647,8 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
         /** /classes/security/UserGroup  */
         $authorUserGroup = $userGroupDao->getDefaultByRoleId($journalId, ROLE_ID_AUTHOR);
-        if ($authorUserGroup === FALSE) {
-            return ROLE_ID_AUTHOR;
+        if ($authorUserGroup === false) {
+            return false;
         }
         return $authorUserGroup->getId();
     }
@@ -646,8 +665,6 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     private function getOrCreateUser($emailAddress, $firstName, $lastName) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
-        /** @var RoleDAO $roleDao */
-        $roleDao = DAORegistry::getDAO('RoleDAO');
         if ($userDao->userExistsByEmail($emailAddress)) {
 
             // User already has account, check if enrolled as author in journal
@@ -691,8 +708,6 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     private function getUserForReviewing($emailAddress, $journalId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
-        /** @var RoleDAO $roleDao */
-        $roleDao = DAORegistry::getDAO('RoleDAO');
         if ($userDao->userExistsByEmail($emailAddress)) {
 
             // User already has account, check if enrolled as author in journal
@@ -706,11 +721,11 @@ class RestApiGatewayPlugin extends GatewayPlugin {
 
 
     // todo:
-    private function updateArticle($authorId, $journalId) {
+    /*private function updateArticle($authorId, $journalId) {
 
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         /** @var UserDAO $userDao */
-        $userDao = DAORegistry::getDAO('UserDAO');
+    /*    $userDao = DAORegistry::getDAO('UserDAO');
         $author = $authorDao->getById($authorId);
 
         if ($author !== null && $userDao->userExistsByEmail($author->getEmail())) {
@@ -720,89 +735,179 @@ class RestApiGatewayPlugin extends GatewayPlugin {
             //user has no
             return null;
         }
-    }
+    }*/
 
     /**
      * @param User $user
      * @return int
      * @throws Exception
      */
-    private function updateUser(User $user) {
+    /*private function updateUser(User $user) {
         $userId = $user->getId();
         if ($userId === null) {
             throw new Exception("Error: Problem in updating User data");
         }
         /** @var UserDAO $userDao */
-        $userDao = DAORegistry::getDAO('UserDAO');
+    /*    $userDao = DAORegistry::getDAO('UserDAO');
         $userDao->updateObject($user);
         return $userId;
-    }
+    }*/
 
     /**
      * @param $url
      * @param int $statusCode
      */
-    private function redirect($url, $statusCode = 303) {
+    /*private function redirect($url, $statusCode = 303) {
         header('Location: ' . $url, true, $statusCode);
         die();
+    }*/
+
+    /**
+     * Find the access rights the current user should have on the editor.
+     * Given that Fidus Writer and OJS have different access rights models,
+     * we translate the access rights to one of three: 1. author, 2. reviewer
+     * or 3. editor, in this order. If a user has multiple types of access
+     * rights, only the first of these will be considered. If a user cannot be
+     * considered to be any of these, false is returned.
+     *
+     * For example:
+     * 1. User A is an administrator of the OJS site and therefore
+     * has editor rights in all journals. User A has sent in a submission to
+     * OJS via Fidus Writer as an author. Because User A is both an editor and
+     * an author, the first one of these will be chosen: The access rights of
+     * user A 'author'.
+     * 2. User B is both a reviewer and an editor in OJS in relation to one
+     * submission. The access rights of user B will be 'reviewer'
+     * 3. User C is registered on the OJS site, but only as a reader without
+     * editing rights. The access rights of user C will be false.
+     */
+    private function getAccessRights($user, $submissionId) {
+        $authorDao = DAORegistry::getDAO('AuthorDAO');
+        $author = $authorDao->getPrimaryContact($submissionId);
+
+        $userId = $user->getId();
+
+        $submissionDao = Application::getSubmissionDAO();
+        $submission = $submissionDao->getById($submissionId);
+        $journalId = $submission->getContextId();
+
+        $roleDao = DAORegistry::getDAO('RoleDAO');
+
+        // There seems to be no direct connection between authors and users,
+        // so we make a guess.
+        // If the user is in the author group for the journal AND
+        // the email is the same as that of the author who si set as the
+        // primary contact, we assume this is the author.
+        // OBS! This means an author who changes the email address of his OJS
+        // user account will run into problems.
+        if (
+            $roleDao->userHasRole($journalId, $userId, ROLE_ID_AUTHOR) &&
+            $user->getEmail() === $author->getEmail()
+        ) {
+            return array('author', $jounalId, $userId);
+        }
+
+        // Check all registered reviewers if one of them is our user. If so, return 'reviewer'
+        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
+        $reviewAssignmentsArray = $reviewAssignmentDao->getBySubmissionId($submissionId);
+        foreach ($reviewAssignmentsArray as $reviewAssignmentObject) {
+            if ($reviewAssignmentObject->getReviewerId() === $userId) {
+                return array('reviewer', $journalId, $userId);
+            }
+        }
+
+        // Check various roles that all could be counted as editors.
+        if ($roleDao->userHasRole($journalId, $userId, ROLE_ID_MANAGER)) {
+            return array('editor', $journalId, $userId);
+        } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_SUB_EDITOR)) {
+            return array('editor', $journalId, $userId);
+        } elseif ($roleDao->userHasRole(none, $userId, ROLE_ID_SITE_ADMIN)) {
+            return array('editor', $journalId, $userId);
+        } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_GUEST_EDITOR)) {
+            return array('editor', $journalId, $userId);
+        } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_ASSISTANT)) {
+            return array('editor', $journalId, $userId);
+        }
+
+        return array(false, $journalId);
     }
 
     /**
-     * @param $revUrl
+     * Gets a temporary access token from the Fidus Writer server to log the
+     * given user in. This way we avoid exposing the api key in the client.
+     * @param $userId
+     * @param $accessRights
+     */
+    private function getLoginToken($editorUrl, $userRole, $journalId, $userId) {
+
+        $dataArray = array(
+            'user_id' => $userId,
+            'user_role' => $userRole,
+            'journal_id' => $journalId,
+            'key' => $this->sharedKey
+        );
+
+        $request = curl_init($editorUrl . '/ojs/get_login_token/?' . http_build_query($dataArray));
+        curl_setopt($request, CURLOPT_RETURNTRANSFER, true);
+        $result = json_decode(curl_exec($request), true);
+        return $result['token'];
+    }
+
+
+    /**
+     * Forwards user to the editor after checking access rights.
+     * @param $editorUrl
+     * @param $editorRevisionId
+     * @param $submissionId
+     * @param $version
      * @return string
      */
-    private function loginAuthoringTool($articleUrl) {
-        $sharedKey = $this->sharedKey;
-        $email = $this->getLoggedInUserEmailFromSession();
-        if ($email == Null) {
-            $this->sendErrorResponse("Error: user is not logged in");
+    private function loginEditor($editorUrl, $editorRevisionId, $submissionId, $version) {
+
+        $user = $this->getUserFromSession();
+
+        list ($userRole, $journalId) = $this->getAccessRights($user, $submissionId);
+
+        if ($userRole === false) {
+            $this->sendErrorResponse("Error: insufficient access rights");
             return;
         }
-        $userName = $this->getLoggedInUserNameFromSession();
-        $data = array(
-            'key' => $sharedKey,
-            'email' => $email,
-            'user_name' => $userName
-        );
-        $this->sendPostRequestAndJump($articleUrl, $data);
-        return;
-    }
 
-    /**
-     * @param $url
-     * @param $data_array
-     * @return string
-     */
-    private function sendPostRequestAndJump($url, $dataArray) {
-        $result = '
+        $userId = $user->getId();
+        $loginToken = $this->getLoginToken($editorUrl, $userRole, $journalId, $userId);
+
+        echo '
 <html>
  <body onload="document.frm1.submit()">
-   <form method="post" action="' . $url . '" name = "frm1" class="inline">
-    <input type="hidden" name="key" value="' . $dataArray['key'] . '">
-    <input type="hidden" name="email" value="' . $dataArray['email'] . '">
-    <input type="hidden" name="doc_id" value="' . $dataArray['doc_id'] . '">
-    <input type="hidden" name="user_name" value="' . $dataArray['user_name'] . '">
+   <form method="post" action="' . $editorUrl . '/ojs/revision/' . $editorRevisionId . '/" name = "frm1" class="inline">
+    <input type="hidden" name="token" value="' . $loginToken . '">
     <button type="submit" name="submit_param" value="submit_value" class="link-button">
-    Jumping to the article ...
+    Jumping to the editor ...
     </button>
   </form>
  </body >
 </html >';
-        echo $result;
+
+        return;
     }
 
 
     /**
      * @return User/Null
      */
-    private function getLoggedInUserEmailFromSession() {
-        $email = Null;
+    private function getUserFromSession() {
         $sessionManager = SessionManager::getManager();
         $userSession = $sessionManager->getUserSession();
-        /**
-         * @var User
-         */
         $user = $userSession->getUser();
+        return $user;
+    }
+
+    /**
+     * @return User/Null
+     */
+    /*private function getLoggedInUserEmailFromSession() {
+        $email = Null;
+        $user = $this->getUserFromSession();
         if (isset($user)) {
             $email = $user->getEmail();
         }
@@ -812,19 +917,14 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     /**
      * @return User/Null
      */
-    private function getLoggedInUserNameFromSession() {
+    /*private function getLoggedInUserNameFromSession() {
         $email = Null;
-        $sessionManager = SessionManager::getManager();
-        $userSession = $sessionManager->getUserSession();
-        /**
-         * @var User
-         */
-        $user = $userSession->getUser();
+        $user = $this->getUserFromSession();
         if (isset($user)) {
             $userName = $user->getUsername();
         }
         return $userName;
-    }
+    }*/
 
 
     /**

@@ -7,17 +7,6 @@
  */
 
 import('lib.pkp.classes.plugins.GatewayPlugin');
-import('lib.pkp.classes.context.Context');
-import('classes.journal.Journal');
-import('lib.pkp.classes.workflow.WorkflowStageDAO');
-import('classes.user.UserDAO');
-import('classes.user.User');
-import('lib.pkp.classes.security.Role');
-import('lib.pkp.classes.security.UserGroupAssignment');
-import('lib.pkp.classes.security.AuthSourceDAO');
-import('lib.pkp.classes.submission.SubmissionDAO');
-import('classes.article.AuthorDAO');
-import('classes.article.Author');
 
 class FidusWriterGatewayPlugin extends GatewayPlugin {
 
@@ -105,23 +94,8 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
 
     public function getPluginUrl() {
         $request =& Registry::get('request');
-        return $request->getBaseUrl() . '/' . $this->getPluginPath();
-
-        //$OJSURL = $this->getSiteUrl();
-        //return $OJSURL . '/index.php/index/gateway/plugin/FidusWriterGatewayPlugin';
+        return $request->getBaseUrl() . '/index.php/index/gateway/plugin/FidusWriterGatewayPlugin';
     }
-
-    /***
-     * Get the url of the current site.
-     */
-    /*public function getSiteUrl() {
-        $protocol = empty($_SERVER['HTTPS']) ? 'http' : 'https';
-        $domain = $_SERVER['SERVER_NAME'];
-        $port = $_SERVER['SERVER_PORT'];
-        $portStr = ($protocol == 'http' && $port == 80 || $protocol == 'https' && $port == 443) ? '' : ":$port";
-
-        return "${protocol}://${domain}${portStr}";
-    }*/
 
     /**
      * Handle all requests for this plugin.

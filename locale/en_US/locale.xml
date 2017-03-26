@@ -2,12 +2,15 @@
 <!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
 
 <!--
-  * plugins/generic/ojsIntegrationRestApi/locale/en_US/locale.xml
+  * plugins/generic/fidusWriter/locale/en_US/locale.xml
   * Localization strings
   -->
- 
+
 <locale name="en_US" full_name="U.S. English">
-	<message key="plugins.generic.ojsIntegrationRestApi.displayName">OJS REST API Integration Plugin</message>
-	<message key="plugins.generic.ojsIntegrationRestApi.description">This plugin provides Rest API end points to use OJS and authoring tools as one integrated system.</message>
-	<message key="plugins.generic.ojsIntegrationRestApi.settings">Settings</message>
+	<message key="plugins.generic.fidusWriter.displayName">Fidus Writer Integration Plugin</message>
+	<message key="plugins.generic.fidusWriter.description">This plugin provides integration endpoints to use OJS and Fidus Writer instances as one integrated system.</message>
+	<message key="plugins.generic.fidusWriter.settings">Settings</message>
+    <message key="plugins.generic.fidusWriter.settings.apiKey.description">Please choose a secret API key to allow communication with Fidus Writer servers.</message>
+    <message key="plugins.generic.fidusWriter.settings.apiKey">Fidus Writer API Key</message>
+    <message key="plugins.generic.fidusWriter.manager.settings.apiKeyRequired">The Fidus Writer API Key is required!</message>
 </locale>

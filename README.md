@@ -2,37 +2,38 @@ Bonn University - GESIS Institute
 #####OSCOSS Project
 
 
-#OJSIntegrationRestAPIplugin
-Rest API Plugin for OJS to work with external web-based authoring and text editing and publishing systems. Open joural sysems is an opensource journal management and publishing system that has been developed by the Public Knowledge Project. This Plugin for OJS creates a unified authoring, reviewing and publishing system by integrating the matching services of Fiduswriter online shared authoring tool and the OJS system.
+#FidusWriterPlugin
+This plugin allows the Open Journal Systems (OJS) to work with Fidus Writer instances as one integrated publishing system.
+OJS is an open source journal management and publishing system that has been developed by the Public Knowledge Project. Fidus Writer is an open source academic collaborative and online text processor.
 
 
-Github source code of the plugin:
+Source code of the plugin:
 https://github.com/OSCOSS/OJSIntegrationRestAPIplugin
 
-Open journal system:
+Open Journal Systems (OJS):
 https://pkp.sfu.ca/ojs/
 
 Fiduswriter:
 https://www.fiduswriter.org/
 
 
-####Use case : FidusWriter & OJS
-Our focus of use case was the working with FidusWriter collaborative authoring tool(https://www.fiduswriter.org) and OJS while the the code is written as open as possible for any system that can deploy Rest API that provides online authoring and  intends to benefit from a workflow managment system.
+####Use case: FidusWriter & beyond
+This plugin has been programmed with the use case of integrating Fidus Writer, but we have written it as open so that in the future it will hopefully be possible to make it work with a range of different online text processors. For this reason, we have tried to incorporate as much of a REST API as possible.
 
 ##Installation:
 #####1.First step
-An installation of OJS is needed. To install OJS please followup its readme in https://github.com/pkp/ojs/
+An installation of OJS is needed. To install OJS please follow the instructions at https://github.com/pkp/ojs/
 
-To have its latest version please check out the master branch.
+To install the latest version, please check out the master branch.
 
 #####2.Second step
-Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder inside your OJS folder.
+Download and copy the plugin files from github into plugins/generic/fidusWriter inside your OJS folder.
 Create the folder if it does not exist. You can achieve this by running these commands:
 
 ```
 cd plugins/generic/
 git clone https://github.com/OSCOSS/OJSIntegrationRestAPIplugin.git
-mv OJSIntegrationRestAPIplugin ojsIntegrationRestAPI
+mv OJSIntegrationRestAPIplugin fidusWriter
 cd ../..
 ```
 
@@ -42,26 +43,36 @@ Then, run the upgrade script to register the plugin with the system by running:
 php tools/upgrade.php upgrade
 ```
 
-#####3.To Activate on the OJS end:
+#####3. Activate the plugin in OJS:
 Enable the plugin via the OJS website interface:
 
 Make sure you have set up at least one journal on your site. Otherwise the settings menu does not show.
 
-Open the OJS interface and select "ENABLE" under Settings "OJS REST API Integration Plugin" under the following routes:
+Open the OJS interface and select "ENABLE" under the settings "Fidus Writer Integration Plugin" under the following routes:
 
  in OJS 3.0 :
- 
+
  setting > website > plugins
 
 in OJS < 3.0:
- 
+
 Home > User > Journal Management > Plugin Management
 
-#####4.To Activate on the Editor end:
+#####4. Set the API KEY:
+Come up with an API Key to allow secure communications between Fidus Writer and OJS. This is just a single long text string that you should not share with anyone that will need to be entered in the configurations of Fidus Writer and OJS. Be cautious: The key allows automatic login into Fidus Writer and OJS in various ways, so do not share it!
+
+To set the key in OJS, go to the settings of the Fidus Writer integration plugin under the following routes:
+
+in OJS 3.0 :
+
+setting > website > plugins -> Fidus Writer Integration plugin (triangle to left) -> Settings -> Enter API key -> Save.
+
+
+#####5.To Activate on the Editor end:
 
 Set the OJS_URL to the base URL of your OJS installation (for example: "http://www.myojssite.com").
 
-Set the OJS_KEY to "d5PW586jwefjn!3fv".
+Set the OJS_KEY to the API Key chosen in step 4.
 
 In the case of Fidus Writer, these settings are in the configuration.php file in the section SERVER_INFO.
 

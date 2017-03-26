@@ -12,7 +12,6 @@ import('classes.journal.Journal');
 import('lib.pkp.classes.workflow.WorkflowStageDAO');
 import('classes.user.UserDAO');
 import('classes.user.User');
-import('classes.security.RoleDAO');
 import('lib.pkp.classes.security.Role');
 import('lib.pkp.classes.security.UserGroupAssignment');
 import('lib.pkp.classes.security.AuthSourceDAO');
@@ -74,8 +73,8 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * Override the builtin to get the correct template path.
      * @return string
      */
-    public function getTemplatePath() {
-        return $this->getFidusWriterPlugin()->getTemplatePath();
+    public function getTemplatePath($inCore = false) {
+        return $this->getFidusWriterPlugin()->getTemplatePath($inCore);
     }
 
     /**

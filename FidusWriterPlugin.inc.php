@@ -249,7 +249,7 @@ class FidusWriterPlugin extends GenericPlugin {
             case 'gateways':
                 $this->import('FidusWriterGatewayPlugin');
                 $gatewayPlugin = new FidusWriterGatewayPlugin($this->getName());
-                $plugins[$gatewayPlugin->getSeq()][$$gatewayPlugin->getPluginPath()] = $gatewayPlugin;
+                $plugins[$gatewayPlugin->getSeq()][$gatewayPlugin->getPluginPath()] = $gatewayPlugin;
                 break;
         }
         return false;

@@ -1,22 +1,12 @@
 <?php
-/**
- * Project OSCOSS
- * University of Bonn
- * User: Afshin Sadeghi sadeghi@cs.uni-bonn.de
- * @ingroup plugins_generic_ojsIntegrationRestApi
- * Date: 13/06/16
- * Time: 14:59
- */
 
 /**
- * @defgroup plugins_generic_ojsIntegrationRestApi ojs anf online authoring and editoring systems integration Plugin
- * @brief Wrapper for ojsIntegrationRestApi plugin.
+ * Copyright 2016-17, Afshin Sadeghi (sadeghi@cs.uni-bonn.de) of the OSCOSS
+ * Project.
+ * License: MIT. See LICENSE.md for details.
  */
 
+require_once('FidusWriterPlugin.inc.php');
+return new FidusWriterPlugin();
 
-if (!class_exists('IntegrationApiPlugin')) {
-
-    require_once('IntegrationApiPlugin.inc.php');
-    return new IntegrationApiPlugin();
-}
 ?>

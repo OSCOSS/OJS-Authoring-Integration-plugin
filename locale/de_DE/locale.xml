@@ -2,12 +2,15 @@
 <!DOCTYPE locale SYSTEM "../../../../../lib/pkp/dtd/locale.dtd">
 
 <!--
-  * plugins/generic/ojsIntegrationRestApi/locale/de_DE/locale.xml
+  * plugins/generic/fidusWriter/locale/de_DE/locale.xml
   * Localization strings for the de_DE (Deutsch (Deutschland)) locale.
   *
   -->
 <locale name="de_DE" full_name="Deutsch (Deutschland)">
-	<message key="plugins.generic.ojsIntegrationRestApi.displayName">OJS REST API Integration Plugin</message>
-	<message key="plugins.generic.ojsIntegrationRestApi.description">Dieses Plugin bietet REST API Endpunkte um OJS und Auorentools als ein integriertes System zu verwenden.</message>
-	<message key="plugins.generic.ojsIntegrationRestApi.settings">Einstellungen</message>
+	<message key="plugins.generic.fidusWriter.displayName">Fidus Writer Integrations Plugin</message>
+	<message key="plugins.generic.fidusWriter.description">Dieses Plugin bietet eine Verknüpfung mit Fidus Writer Servern, um beide als ein integriertes System zu verwenden.</message>
+	<message key="plugins.generic.fidusWriter.settings">Einstellungen</message>
+	<message key="plugins.generic.fidusWriter.settings.apiKey.description">Bitte wähle einen geheimen API Schlüssel. Mit dem Schlüssel werden Fidus Writer Isntanxen direkt mit dieser OJS Instanz kommunizieren können.</message>
+	<message key="plugins.generic.fidusWriter.settings.apiKey">Fidus Writer API Schlüssel</message>
+	<message key="plugins.generic.fidusWriter.manager.settings.apiKeyRequired">Der Fidus Writer API Schlüssel ist vorgeschrieben!</message>
 </locale>

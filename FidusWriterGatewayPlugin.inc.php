@@ -1,11 +1,11 @@
 <?php
+
 /**
- * Project OSCOSS
- * University of Bonn
- * User: Afhin Sadeghi sadeghi@cs.uni-bonn.de
- * Date: 15/06/16
- * Time: 13:22
+ * Copyright 2016-17, Afshin Sadeghi (sadeghi@cs.uni-bonn.de) of the OSCOSS
+ * Project.
+ * License: MIT. See LICENSE.md for details.
  */
+
 import('lib.pkp.classes.plugins.GatewayPlugin');
 import('lib.pkp.classes.context.Context');
 import('classes.journal.Journal');
@@ -20,41 +20,17 @@ import('lib.pkp.classes.submission.SubmissionDAO');
 import('classes.article.AuthorDAO');
 import('classes.article.Author');
 
-class RestApiGatewayPlugin extends GatewayPlugin {
+class FidusWriterGatewayPlugin extends GatewayPlugin {
+
+    // BEGIN STANDARD PLUGIN FUNCTIONS
 
     /** @var string Name of parent plugin */
-    public $parentPluginName;
-    /** string API version */
-    private $APIVersion;
-    /** @var string */
-    private $defaultLocale;
-    /** @var string shared key to send request to AT */
-    private $sharedKey;
-    /**  @var string current plugin URL */
-    private $pluginURL;
+	public $parentPluginName;
 
-    public function RestApiGatewayPlugin($parentPluginName) {
-        parent::__construct();
-        $this->parentPluginName = $parentPluginName;
-        $this->APIVersion = "1.0";
-        $this->defaultLocale = AppLocale::getLocale();
-        $OJSURL = $this->getSiteUrl();
-        $this->pluginURL = $OJSURL . '/index.php/index/gateway/plugin/RestApiGatewayPlugin';
-        //todo: this should be get from user in plugin installation time
-        $this->sharedKey = "d5PW586jwefjn!3fv";
-    }
-
-    /***
-     * Get the url of the current site.
-     */
-    public function getSiteUrl() {
-        $protocol = empty($_SERVER['HTTPS']) ? 'http' : 'https';
-        $domain = $_SERVER['SERVER_NAME'];
-        $port = $_SERVER['SERVER_PORT'];
-        $portStr = ($protocol == 'http' && $port == 80 || $protocol == 'https' && $port == 443) ? '' : ":$port";
-
-        return "${protocol}://${domain}${portStr}";
-    }
+	function __construct($parentPluginName) {
+		parent::__construct();
+		$this->parentPluginName = $parentPluginName;
+	}
 
     /**
      * Hide this plugin from the management interface (it's subsidiary)
@@ -63,22 +39,52 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         return true;
     }
 
-
     /**
-     * Get the name of this plugin. The name must be unique within
-     * its category.
+     * Get the name of this plugin.
      * @return String name of plugin
      */
     public function getName() {
-        return 'RestApiGatewayPlugin';
+        return 'FidusWriterGatewayPlugin';
     }
 
     public function getDisplayName() {
-        return __('plugins.generic.ojsIntegrationRestApi.displayName');
+        return __('plugins.generic.fidusWriter.displayName');
     }
 
     public function getDescription() {
-        return __('plugins.generic.ojsIntegrationRestApi.description');
+        return __('plugins.generic.fidusWriter.description');
+    }
+
+    /**
+	 * Get the Fidus Writer plugin
+	 * @return FidusWriterPlugin
+	 */
+	function getFidusWriterPlugin() {
+		return PluginRegistry::getPlugin('generic', $this->parentPluginName);
+	}
+
+    /**
+     * Override the builtin to get the correct plugin path.
+     */
+    public function getPluginPath() {
+        return $this->getFidusWriterPlugin()->getPluginPath();
+    }
+
+    /**
+     * Override the builtin to get the correct template path.
+     * @return string
+     */
+    public function getTemplatePath() {
+        return $this->getFidusWriterPlugin()->getTemplatePath();
+    }
+
+    /**
+     * Get whether or not this plugin is enabled. (Should always return true, as the
+     * parent plugin will take care of loading this one when needed)
+     * @return boolean
+     */
+    public function getEnabled() {
+        return $this->getFidusWriterPlugin()->getEnabled();
     }
 
     /**
@@ -88,38 +94,35 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         return true;
     }
 
-    /**
-     * Get the IntegrationApiPlugin plugin
-     * @return IntegrationApiPlugin
-     */
-    public function getIntegrationApiPlugin() {
-        return PluginRegistry::getPlugin('generic', $this->parentPluginName);
+    // END STANDARD PLUGIN FUNCTIONS
+
+    public function getApiKey() {
+        return $this->getFidusWriterPlugin()->getApiKey();
     }
 
-    /**
-     * Override the builtin to get the correct plugin path.
-     */
-    public function getPluginPath() {
-        return $this->getIntegrationApiPlugin()->getPluginPath();
+    public function getApiVersion() {
+        return "1.0";
     }
 
-    /**
-     * Override the builtin to get the correct template path.
-     * @return string
-     */
-    public function getTemplatePath() {
-        return $this->getIntegrationApiPlugin()->getTemplatePath();
+    public function getPluginUrl() {
+        $request =& Registry::get('request');
+        return $request->getBaseUrl() . '/' . $this->getPluginPath();
+
+        //$OJSURL = $this->getSiteUrl();
+        //return $OJSURL . '/index.php/index/gateway/plugin/FidusWriterGatewayPlugin';
     }
 
-    /**
-     * Get whether or not this plugin is enabled. (Should always return true, as the
-     * parent plugin will take care of loading this one when needed)
-     * @return boolean
+    /***
+     * Get the url of the current site.
      */
-    public function getEnabled() {
-        return $this->getIntegrationApiPlugin()->getEnabled();
-    }
+    /*public function getSiteUrl() {
+        $protocol = empty($_SERVER['HTTPS']) ? 'http' : 'https';
+        $domain = $_SERVER['SERVER_NAME'];
+        $port = $_SERVER['SERVER_PORT'];
+        $portStr = ($protocol == 'http' && $port == 80 || $protocol == 'https' && $port == 443) ? '' : ":$port";
 
+        return "${protocol}://${domain}${portStr}";
+    }*/
 
     /**
      * Handle all requests for this plugin.
@@ -142,20 +145,21 @@ class RestApiGatewayPlugin extends GatewayPlugin {
                     case 'test': // Basic test
                         $response = array(
                             "message" => "GET response",
-                            "version" => $this->APIVersion
+                            "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
                         break;
                     case 'journals':
                         // Get all journals setup on this server.
-                        $response = $this->getJournals();
-                        // possible extension  get journals by email of a author.
-                        // Currently, it returns all jounals
-                        // sample:
-                        //$userEmail = $this->getParameter('userEmail');
-                        // echo json_encode(['userId'=>$userId]);
-                        //$response = $this->getUserJournals($userEmail);
+                        $key = $_GET['key'];
+                        if ($this->getApiKey() !== $key) {
+                            // Not correct api key.
+                            $error = "Incorrect API Key";
+                            $this->sendErrorResponse($error);
+                            break;
+                        }
 
+                        $response = $this->getJournals();
                         $this->sendJsonResponse($response);
                         break;
                     case 'documentReview':
@@ -179,7 +183,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
                     case 'test': // Basic test
                         $response = array(
                             "message" => "POST test response",
-                            "version" => $this->APIVersion
+                            "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
 
@@ -191,7 +195,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
                             "submission_id" => $resultArray["submissionId"],
                             "journal_id" => $resultArray["journalId"],
                             "user_id" => $resultArray["userId"],
-                            "version" => $this->APIVersion
+                            "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
                         break;
@@ -201,7 +205,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
                         $response = array(
                             "journal_id" => $resultArray["journalId"],
                             "user_id" => $resultArray["userId"],
-                            "version" => $this->APIVersion
+                            "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
                         break;
@@ -216,7 +220,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
             if ($restCallType === "PUT") {
                 $response = array(
                     "message" => "PUT response",
-                    "version" => $this->APIVersion
+                    "version" => $this->getApiVersion()
                 );
                 $this->sendJsonResponse($response);
             }
@@ -224,7 +228,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
             if ($restCallType === "DELETE") {
                 $response = array(
                     "message" => "DELETE response",
-                    "version" => $this->APIVersion
+                    "version" => $this->getApiVersion()
                 );
                 $this->sendJsonResponse($response);
             }
@@ -242,7 +246,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $varName
      * @return string
      */
-    private function getPOSTPayloadVariable($varName) {
+    function getPOSTPayloadVariable($varName) {
         error_log("logging:" . implode($_SERVER, ","));
         //todo: find the cors_token from header , check of is in $_SERVER or other places.
         //   error_log("loggingCRF:". $_SERVER["csrf_token"],0);  //csrfToken
@@ -255,7 +259,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     /**
      * @return string
      */
-    private function getRESTRequestType() {
+    function getRESTRequestType() {
         $callType = $_SERVER['REQUEST_METHOD'];
         switch ($callType) {
             case 'PUT':
@@ -271,24 +275,9 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     }
 
     /**
-     * @return array
-     */
-    private function getParameters() {
-        return $this->request->_requestVars;
-    }
-
-    /**
-     * @param $parameter
-     * @return string
-     */
-    private function getParameter($parameter) {
-        return $this->request->_requestVars[$parameter];
-    }
-
-    /**
      * @param array $response
      */
-    private function sendJsonResponse($response) {
+    function sendJsonResponse($response) {
         header("Content-Type: application/json;charset=utf-8");
         http_response_code(200);
         echo json_encode($response);
@@ -317,7 +306,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * Return a list of journals hosted at this installation.
      * @return array
      */
-    private function getJournals() {
+    function getJournals() {
         $journalArray = [];
         $journalDao = DAORegistry::getDAO('JournalDAO');
         /* @var $journalDao JournalDAO */
@@ -340,7 +329,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         if (!isset($journal)) $this->sendErrorResponse("No journal is available");
         $response = array(
             "journals" => $journalArray,
-            "version" => $this->APIVersion
+            "version" => $this->getApiVersion()
         );
         return $response;
     }
@@ -349,7 +338,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param Submission $submission
      * @return Submission
      */
-    private function setArticleSubmissionVariables($submission, $journalId, $filename, $title) {
+    function setArticleSubmissionVariables($submission, $journalId, $filename, $title) {
         //version numbers become clickable
         // update the link part is left
         //Fw side and test is left
@@ -374,7 +363,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * submission or creates a new one.
      * @return array
      */
-    private function saveArticleWithAuthor() {
+    function saveArticleWithAuthor() {
         // Get all the variables used both when saving and updating submissions.
         $editorUrl = $this->getPOSTPayloadVariable("editor_url");
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
@@ -429,8 +418,8 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $version
      * @return string
      */
-    private function makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, $version) {
-        $signInUrl = $this->pluginURL . '/documentReview?editor_url=' . $editorUrl . '&submission_id=' . $submissionId . '&editor_revision_id=' . $editorRevisionId . '&version=' . $version;
+    function makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, $version) {
+        $signInUrl = $this->getPluginUrl() . '/documentReview?editor_url=' . $editorUrl . '&submission_id=' . $submissionId . '&editor_revision_id=' . $editorRevisionId . '&version=' . $version;
         $round = $version + 1;
         $linkToOJS = $title . '<a href="' . $signInUrl . '"> Round ' . $round .'</a>';
         return $linkToOJS;
@@ -439,7 +428,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     /**
      * @return mixed
      */
-    private function saveNewArticleSubmission($editorUrl, $title, $editorRevisionId, $journalId, $filename) {
+    function saveNewArticleSubmission($editorUrl, $title, $editorRevisionId, $journalId, $filename) {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->newDataObject();
         $submission->setStatus(STATUS_QUEUED);
@@ -488,7 +477,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @return Submission
      * @throws Exception
      */
-    private function updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version) {
+    function updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version) {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
         //error_log("MOINMOIN0:" . var_export([$submissionId,$versionNum, $submission], true), 0);
@@ -509,7 +498,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @return array
      * @throws Exception
      */
-    private function saveArticleReview() {
+    function saveArticleReview() {
         $journalId = $this->getPOSTPayloadVariable("journal_id");
         if ($journalId === NULL || $journalId === "") {
             throw new Exception("Error: journal_id is not set or is empty in the header");
@@ -610,7 +599,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $lastName
      * @return null
      */
-    private function saveAuthor($articleId, $journalId, $emailAddress, $firstName, $lastName, $affiliation, $country, $authorUrl, $biography) {
+    function saveAuthor($articleId, $journalId, $emailAddress, $firstName, $lastName, $affiliation, $country, $authorUrl, $biography) {
         // Set user to initial author
 
         $authorDao = DAORegistry::getDAO('AuthorDAO');
@@ -643,7 +632,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $journalId
      * @return mixed
      */
-    private function getAuthorUserGroupId($journalId) {
+    function getAuthorUserGroupId($journalId) {
         $userGroupDao = DAORegistry::getDAO('UserGroupDAO');
         /** /classes/security/UserGroup  */
         $authorUserGroup = $userGroupDao->getDefaultByRoleId($journalId, ROLE_ID_AUTHOR);
@@ -662,7 +651,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $lastName
      * @return PKPUser|User
      */
-    private function getOrCreateUser($emailAddress, $firstName, $lastName) {
+    function getOrCreateUser($emailAddress, $firstName, $lastName) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         if ($userDao->userExistsByEmail($emailAddress)) {
@@ -705,7 +694,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @internal param $firstName
      * @internal param $lastName
      */
-    private function getUserForReviewing($emailAddress, $journalId) {
+    function getUserForReviewing($emailAddress, $journalId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         if ($userDao->userExistsByEmail($emailAddress)) {
@@ -719,48 +708,6 @@ class RestApiGatewayPlugin extends GatewayPlugin {
         return $user;
     }
 
-
-    // todo:
-    /*private function updateArticle($authorId, $journalId) {
-
-        $authorDao = DAORegistry::getDAO('AuthorDAO');
-        /** @var UserDAO $userDao */
-    /*    $userDao = DAORegistry::getDAO('UserDAO');
-        $author = $authorDao->getById($authorId);
-
-        if ($author !== null && $userDao->userExistsByEmail($author->getEmail())) {
-
-            return null;
-        } else {
-            //user has no
-            return null;
-        }
-    }*/
-
-    /**
-     * @param User $user
-     * @return int
-     * @throws Exception
-     */
-    /*private function updateUser(User $user) {
-        $userId = $user->getId();
-        if ($userId === null) {
-            throw new Exception("Error: Problem in updating User data");
-        }
-        /** @var UserDAO $userDao */
-    /*    $userDao = DAORegistry::getDAO('UserDAO');
-        $userDao->updateObject($user);
-        return $userId;
-    }*/
-
-    /**
-     * @param $url
-     * @param int $statusCode
-     */
-    /*private function redirect($url, $statusCode = 303) {
-        header('Location: ' . $url, true, $statusCode);
-        die();
-    }*/
 
     /**
      * Find the access rights the current user should have on the editor.
@@ -781,7 +728,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * 3. User C is registered on the OJS site, but only as a reader without
      * editing rights. The access rights of user C will be false.
      */
-    private function getAccessRights($user, $submissionId) {
+    function getAccessRights($user, $submissionId) {
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         $author = $authorDao->getPrimaryContact($submissionId);
 
@@ -838,13 +785,13 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $userId
      * @param $accessRights
      */
-    private function getLoginToken($editorUrl, $userRole, $journalId, $userId) {
+    function getLoginToken($editorUrl, $userRole, $journalId, $userId) {
 
         $dataArray = array(
             'user_id' => $userId,
             'user_role' => $userRole,
             'journal_id' => $journalId,
-            'key' => $this->sharedKey
+            'key' => $this->getApiKey()
         );
 
         $request = curl_init($editorUrl . '/ojs/get_login_token/?' . http_build_query($dataArray));
@@ -862,7 +809,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $version
      * @return string
      */
-    private function loginEditor($editorUrl, $editorRevisionId, $submissionId, $version) {
+    function loginEditor($editorUrl, $editorRevisionId, $submissionId, $version) {
 
         $user = $this->getUserFromSession();
 
@@ -895,36 +842,12 @@ class RestApiGatewayPlugin extends GatewayPlugin {
     /**
      * @return User/Null
      */
-    private function getUserFromSession() {
+    function getUserFromSession() {
         $sessionManager = SessionManager::getManager();
         $userSession = $sessionManager->getUserSession();
         $user = $userSession->getUser();
         return $user;
     }
-
-    /**
-     * @return User/Null
-     */
-    /*private function getLoggedInUserEmailFromSession() {
-        $email = Null;
-        $user = $this->getUserFromSession();
-        if (isset($user)) {
-            $email = $user->getEmail();
-        }
-        return $email;
-    }
-
-    /**
-     * @return User/Null
-     */
-    /*private function getLoggedInUserNameFromSession() {
-        $email = Null;
-        $user = $this->getUserFromSession();
-        if (isset($user)) {
-            $userName = $user->getUsername();
-        }
-        return $userName;
-    }*/
 
 
     /**
@@ -932,7 +855,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $reviewAssignment
      * @return bool
      */
-    private function saveCommentForEditor($editorMessageCommentText, $reviewAssignment) {
+    function saveCommentForEditor($editorMessageCommentText, $reviewAssignment) {
         $hidden = true;
         return $this->saveComment($editorMessageCommentText, $hidden, $reviewAssignment);
     }
@@ -942,7 +865,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $reviewAssignment
      * @return bool
      */
-    private function saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment) {
+    function saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment) {
         $hidden = false;
         return $this->saveComment($editorAndAuthorMessageCommentText, $hidden, $reviewAssignment);
     }
@@ -953,7 +876,7 @@ class RestApiGatewayPlugin extends GatewayPlugin {
      * @param $reviewAssignment
      * @return bool
      */
-    private function saveComment($commentText, $hidden, $reviewAssignment) {
+    function saveComment($commentText, $hidden, $reviewAssignment) {
         if (strlen($commentText) === 0) {
             return false;
         }

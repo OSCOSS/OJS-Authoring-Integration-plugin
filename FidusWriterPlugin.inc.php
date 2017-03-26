@@ -1,4 +1,11 @@
 <?php
+
+/**
+ * Copyright 2016-17, Afshin Sadeghi (sadeghi@cs.uni-bonn.de) of the OSCOSS
+ * Project.
+ * License: MIT. See LICENSE.md for details.
+ */
+
 import('lib.pkp.classes.plugins.GenericPlugin');
 import('lib.pkp.classes.submission.SubmissionDAO');
 import('classes.user.UserDAO');
@@ -8,17 +15,32 @@ import('classes.article.Author');
 import('lib.pkp.classes.security.UserGroupAssignment');
 import('lib.pkp.classes.security.AuthSourceDAO');
 import('lib.pkp.classes.submission.SubmissionDAO');
-/**
- * Project OSCOSS
- * University of Bonn
- * User: afshin Sadeghi sadeghi@cs.uni-bonn.de
- * Date: 13/06/16
- * Time: 14:44
- */
-class IntegrationApiPlugin extends GenericPlugin {
 
-    /** @var string authoring tool URL address */
-    protected $sharedKey;
+class FidusWriterPlugin extends GenericPlugin {
+
+
+
+    /**
+     * @param $category
+     * @param $path
+     * @return bool
+     */
+
+    function register($category, $path) {
+
+        if (parent::register($category, $path)) {
+            if ($this->getEnabled()) {
+                HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
+                HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'registerReviewerWebHook'));
+                HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'removeReviewerWebHook'));
+                HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    // BEGIN STANDARD PLUGIN FUNCTIONS
 
     /**
      * Get the name of the settings file to be installed on new context
@@ -33,9 +55,9 @@ class IntegrationApiPlugin extends GenericPlugin {
      * Override the builtin to get the correct template path.
      * @return string
      */
-    function getTemplatePath() {
-        return parent::getTemplatePath() . 'templates/';
-    }
+    function getTemplatePath($inCore = false) {
+ 		return parent::getTemplatePath($inCore) . 'templates/';
+ 	}
 
     /**
      * Get the display name for this plugin.
@@ -43,7 +65,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @return string
      */
     function getDisplayName() {
-        return __('plugins.generic.ojsIntegrationRestApi.displayName');
+        return __('plugins.generic.fidusWriter.displayName');
 
     }
 
@@ -53,10 +75,60 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @return string
      */
     function getDescription() {
-        return __('plugins.generic.ojsIntegrationRestApi.description');
-
+        return __('plugins.generic.fidusWriter.description');
     }
 
+    /**
+     * @copydoc Plugin::getActions()
+     */
+    function getActions($request, $verb) {
+        $router = $request->getRouter();
+        import('lib.pkp.classes.linkAction.request.AjaxModal');
+        return array_merge(
+            $this->getEnabled()?array(
+                new LinkAction(
+                    'settings',
+                    new AjaxModal($router->url($request, null, null, 'manage', null, array('verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic')),
+                        $this->getDisplayName()
+                    ),
+                    __('manager.plugins.settings'),
+                    null
+                ),
+            ):array(),
+            parent::getActions($request, $verb)
+        );
+    }
+
+
+	/**
+	 * @copydoc Plugin::manage()
+	 */
+    function manage($args, $request) {
+        $this->import('FidusWriterSettingsForm');
+ 		switch ($request->getUserVar('verb')) {
+ 			case 'settings':
+				$settingsForm = new FidusWriterSettingsForm($this);
+				$settingsForm->initData();
+				return new JSONMessage(true, $settingsForm->fetch($request));
+                break;
+			case 'save':
+				$settingsForm = new FidusWriterSettingsForm($this);
+				$settingsForm->readInputData();
+				if ($settingsForm->validate()) {
+					$settingsForm->execute();
+					$notificationManager = new NotificationManager();
+					$notificationManager->createTrivialNotification(
+						$request->getUser()->getId(),
+						NOTIFICATION_TYPE_SUCCESS,
+						array('contents' => __('plugins.generic.fidusWriter.settings.saved'))
+					);
+					return new JSONMessage(true);
+				}
+				return new JSONMessage(true, $settingsForm->fetch($request));
+                break;
+ 		}
+ 		return parent::manage($args, $request);
+ 	}
 
     /**
      * @see Plugin::isSitePlugin()
@@ -65,78 +137,14 @@ class IntegrationApiPlugin extends GenericPlugin {
         return true;
     }
 
-    /**
-     * @param $category
-     * @param $path
-     * @return bool
-     */
-    function register($category, $path) {
+    // END STANDARD PLUGIN FUNCTIONS
 
 
-        if (parent::register($category, $path)) {
-            if ($this->getEnabled()) {
-                HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
-                HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'registerReviewerWebHook'));
-                HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'removeReviewerWebHook'));
-                HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
-
-                // HookRegistry::register ('TemplateManager::display', array($this, 'editReviewerTitle'));
-            }
-            return true;
-        }
-        return false;
+    function getApiKey() {
+        $context = Request::getContext();
+        $contextId = ($context == null) ? 0 : $context->getId();
+        return $this->getSetting($contextId, 'apiKey');
     }
-
-
-	/**
-	 * @copydoc Plugin::getActions()
-	 */
-	function getActions($request, $verb) {
-		$router = $request->getRouter();
-		import('lib.pkp.classes.linkAction.request.AjaxModal');
-		return array_merge(
-			$this->getEnabled()?array(
-				new LinkAction(
-					'settings',
-					new AjaxModal($router->url($request, null, null, 'manage', null, array('verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic')),
-						$this->getDisplayName()
-					),
-					__('manager.plugins.settings'),
-					null
-				),
-			):array(),
-			parent::getActions($request, $verb)
-		);
-	}
-
-	/**
-	 * @copydoc Plugin::manage()
-	 */
-	function manage($args, $request) {
-		switch ($request->getUserVar('verb')) {
-			case 'settings':
-				$context = $request->getContext();
-
-				AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
-				$templateMgr = TemplateManager::getManager($request);
-				$templateMgr->register_function('plugin_url', array($this, 'smartyPluginUrl'));
-
-				$this->import('FidusWriterSettingsForm');
-				$form = new FidusWriterSettingsForm($this, $context->getId());
-
-				if ($request->getUserVar('save')) {
-					$form->readInputData();
-					if ($form->validate()) {
-						$form->execute();
-						return new JSONMessage(true);
-					}
-				} else {
-					$form->initData();
-				}
-				return new JSONMessage(true, $form->fetch($request));
-		}
-		return parent::manage($args, $request);
-	}
 
 
     /**
@@ -206,7 +214,6 @@ class IntegrationApiPlugin extends GenericPlugin {
         $submissionId = $revisionReqArr[0];
         $round = $revisionReqArr[2];
 
-        $this->sharedKey = "d5PW586jwefjn!3fv";
         if($round == "1") return;
         // If $submissionId is 0, it is round 0 and no reviewer is assigned yet
         if (is_null($submissionId)) return;
@@ -219,7 +226,7 @@ class IntegrationApiPlugin extends GenericPlugin {
         $dataArray = [
             'author_email' => $authorEmail,
             'author_user_name' => $userName,
-            'key' => $this->sharedKey, //shared key between OJS and Editor software
+            'key' => $this->getApiKey(), //shared key between OJS and Editor software
             'submission_id' => $submissionId,
             'round' => $round];  //editor user for logging in
         // Then send the email address of reviewer to authoring tool.
@@ -235,13 +242,14 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @return bool
      **/
     function callbackLoadCategory($hookName, $args) {
-        $category =& $args[0];
+        $category = $args[0];
         $plugins =& $args[1];
+
         switch ($category) {
             case 'gateways':
-                $this->import('RestApiGatewayPlugin');
-                $gatewayPlugin = new RestApiGatewayPlugin($this->getName());
-                $plugins[$gatewayPlugin->getSeq()][$gatewayPlugin->getPluginPath()] = $gatewayPlugin;
+                $this->import('FidusWriterGatewayPlugin');
+                $gatewayPlugin = new FidusWriterGatewayPlugin($this->getName());
+                $plugins[$gatewayPlugin->getSeq()][$$gatewayPlugin->getPluginPath()] = $gatewayPlugin;
                 break;
         }
         return false;
@@ -252,7 +260,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $userId
      * @return string
      */
-    private function getUserEmail($userId) {
+    function getUserEmail($userId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         return $userDao->getUserEmail($userId);
@@ -262,7 +270,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $userId
      * @return string
      */
-    private function getUserName($userId) {
+    function getUserName($userId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignment $reviewAssignment */
@@ -275,7 +283,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $reviewId
      * @return mixed
      */
-    private function getUserEmailByReviewID($reviewId) {
+    function getUserEmailByReviewID($reviewId) {
         /** @var UserDAO $userDao **/
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
@@ -291,7 +299,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $reviewId
      * @return mixed
      */
-    private function getUserNameByReviewID($reviewId) {
+    function getUserNameByReviewID($reviewId) {
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
@@ -310,7 +318,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $reviewId
      * @return int
      */
-    private function getSubmissionIdByReviewID($reviewId) {
+    function getSubmissionIdByReviewID($reviewId) {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
@@ -330,7 +338,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $dataArray
      * @return string
      */
-    private function sendRequest($requestType, $url, $dataArray) {
+    function sendRequest($requestType, $url, $dataArray) {
         $options = array(
             'http' => array(
                 'header' => "Content-type: application/x-www-form-urlencoded\r\n",
@@ -352,7 +360,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $dataArray
      * @return string
      */
-    private function sendPutRequest($url, $dataArray) {
+    function sendPutRequest($url, $dataArray) {
         $result = $this->sendRequest('PUT', $url, $dataArray);
         return $result;
     }
@@ -362,7 +370,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $dataArray
      * @return string
      */
-    private function sendPostRequest($url, $dataArray) {
+    function sendPostRequest($url, $dataArray) {
         $result = $this->sendRequest('POST', $url, $dataArray);
         return $result;
     }
@@ -370,7 +378,7 @@ class IntegrationApiPlugin extends GenericPlugin {
     /**
      * @return User/Null
      */
-    private function getUserFromSession() {
+    function getUserFromSession() {
         $sessionManager = SessionManager::getManager();
         $userSession = $sessionManager->getUserSession();
         $user = $userSession->getUser();
@@ -383,7 +391,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $round
      * @return mixed
      */
-    private function getDocData($submissionId, $round) {
+    function getDocData($submissionId, $round) {
         $submissionDao = Application::getSubmissionDAO();
         /** @var Submission */
         $submission = $submissionDao->getById($submissionId);
@@ -427,7 +435,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $submissionId
      * @return mixed
      */
-    private function getReviewerEmailBySubmissionId($submissionId) {
+    function getReviewerEmailBySubmissionId($submissionId) {
         /** @var UserDAO $userDao */
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
@@ -454,7 +462,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $submissionId
      * @return string
      */
-    private function getReviewerUserNameBySubmissionId($submissionId) {
+    function getReviewerUserNameBySubmissionId($submissionId) {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
@@ -478,7 +486,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $submissionId
      * @return mixed
      */
-    private function getAuthorEmailBySubmissionId($submissionId) {
+    function getAuthorEmailBySubmissionId($submissionId) {
         error_log("submissionId: ". $submissionId,0);
 
         /** @var AuthorDao $authorDao */
@@ -500,7 +508,7 @@ class IntegrationApiPlugin extends GenericPlugin {
      * @param $submissionId
      * @return string
      */
-    private function getAuthorUserNameBySubmissionId($submissionId) {
+    function getAuthorUserNameBySubmissionId($submissionId) {
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         $authors = $authorDao->getBySubmissionId($submissionId);

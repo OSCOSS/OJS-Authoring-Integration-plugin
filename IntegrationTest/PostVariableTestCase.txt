@@ -5,9 +5,9 @@ add this line:
 echo getPOSTPayloadVariable('payloadvariable')
 
  and make a POST call the route:
- http://localhost:8000/ojs/index.php/TestJournalName/gateway/plugin/RestApiGatewayPlugin/test
+ http://localhost:8000/ojs/index.php/TestJournalName/gateway/plugin/FidusWriterGatewayPlugin/test
  for example:
-http://localhost:8000/ojs/index.php/afshinTestJournal/gateway/plugin/RestApiGatewayPlugin/test
+http://localhost:8000/ojs/index.php/afshinTestJournal/gateway/plugin/FidusWriterGatewayPlugin/test
 
 with the payload
 

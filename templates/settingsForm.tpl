@@ -1,53 +1,29 @@
 {**
  * plugins/generic/fidusWriter/settingsForm.tpl
  *
+ * Based on code of:
  * Copyright (c) 2013 Simon Fraser University Library
  * Copyright (c) 2003-2013 John Willinsky
- * Distributed under the GNU GPL v2. For full terms see the file docs/COPYING.
+ * Distributed under the GNU GPL v2. For full terms see
+ * https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
  *
  * FidusWriter plugin settings
  *
  *}
 
-<script>
+<script type="text/javascript">
 	$(function() {ldelim}
 		// Attach the form handler.
-		$('#fidusWriterSettings').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
+		$('#fidusWriterSettingsForm').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
 	{rdelim});
 </script>
-
-<form class="pkp_form" id="fidusWriterSettings" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" category="generic" plugin=$pluginName verb="settings" save=true}">
+<form class="pkp_form" id="fidusWriterSettingsForm" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" category="generic" plugin=$pluginName verb="save"}">
 	{csrf}
 	{include file="common/formErrors.tpl"}
-	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="fwSettingsFormNotification"}
+	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="fidusWriterSettingsFormNotification"}
 
-	<div id="description">{translate key="plugins.generic.fidusWriter.manager.settings.description"}</div>
-	<div class="separator"></div>
-	<br />
-
-	<table width="100%" class="data">
-		<tr valign="top">
-			<td width="20%" class="label">{fieldLabel name="apiUrl" required="true" key="plugins.generic.fidusWriter.manager.settings.apiUrl"}</td>
-			<td width="80%" class="value">
-				<input type="text" name="apiUrl" id="apiUrl" value="{$apiUrl|escape}" size="60" maxlength="120" class="textField" />
-				<br />
-				<span class="instruct">{translate key="plugins.generic.fidusWriter.manager.settings.apiUrlInstructions"}</span>
-			</td>
-		</tr>
-		<tr valign="top">
-			<td class="label">{fieldLabel name="apiKey" required="true" key="plugins.generic.fidusWriter.manager.settings.apiKey"}</td>
-			<td class="value"><input type="text" name="apiKey" id="apiKey" value="{$apiKey|escape}" size="60" maxlength="120" class="textField" />
-			</td>
-		</tr>
-	</table>
-
-	<br/>
-
-	{fbvFormButtons}
-	
-	<p><span class="formRequired">{translate key="common.requiredField"}</span></p>
+    {fbvFormSection title="plugins.generic.fidusWriter.settings.apiKey" description="plugins.generic.fidusWriter.settings.apiKey.description"}
+		{fbvElement type="text" id="apiKey" value=$apiKey}
+	{/fbvFormSection}
+    {fbvFormButtons id="fidusWriterSettingsFormSubmit" submitText="common.save" hideCancel=true}
 </form>
-
-
-
-{include file="common/footer.tpl"}

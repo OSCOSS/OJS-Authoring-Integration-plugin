@@ -17,14 +17,17 @@ class FidusWriterPlugin extends GenericPlugin {
      */
 
     function register($category, $path) {
-
         if (parent::register($category, $path)) {
+			/* Note: it looks counterintuitive that only the first listener checks
+			   whether the plugin is enabled, but the way OJS is set up, if one
+			   moves the other listeners inside the check, they stop working.
+			*/
             if ($this->getEnabled()) {
                 HookRegistry::register('PluginRegistry::loadCategory', array($this, 'callbackLoadCategory'));
-                HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'registerReviewerWebHook'));
-                HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'removeReviewerWebHook'));
-                HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
             }
+			HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'callbackAddReviewer'));
+			HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'callbackRemoveReviewer'));
+			HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
             return true;
         }
         return false;
@@ -131,33 +134,35 @@ class FidusWriterPlugin extends GenericPlugin {
 
 
     function getApiKey() {
-        $context = Request::getContext();
-        $contextId = ($context == null) ? 0 : $context->getId();
-        return $this->getSetting($contextId, 'apiKey');
+        return $this->getSetting(CONTEXT_ID_NONE, 'apiKey');
     }
 
 
     /**
+	 * Sends information about a newly registered reviewer for a specific submission
+	 * to Fidus Writer, if the submission is of a document in Fidus Writer.
      * @param $hookName
      * @param $args
      * @return bool
      */
-    function registerReviewerWebHook($hookName, $args) {
-
-        $reviewAssignment =& $args[0];
+    function callbackAddReviewer($hookName, $args) {
         $row =& $args[1];
         $submissionId = $row[0];
-        $reviewerId = $row[1];
-        $email = $this->getUserEmail($reviewerId);
-        $userName = $this->getUserName($reviewerId);
-        $round = ($row[4]);
-        $docData = $this->getDocData($submissionId, $round);
-        $dataArray = ['email' => $email,
-            'rev_id' => $docData['rev_id'],
-            'user_name' => $userName];
-        $url = $docData['base_url'] . '/ojs/reviewer/';
-
-        error_log("MOINMOINAddreviewer: " . $documentId."---". $email, 0);
+		$docData = $this->getFidusWriterLinkData($submissionId);
+		if ($docData === false) {
+			// The article was not connected with Fidus Writer, so we send no
+			// notification.
+			return false;
+		}
+		$reviewerId = $row[1];
+        $reviewer = $this->getUser($reviewerId);
+        $dataArray = [
+			'email' => $reviewer->getEmail(),
+			'username' => $reviewer->getUserName(),
+			'user_id' => $reviewerId,
+			'key' => $this->getApiKey()
+		];
+        $url = $docData['editor_url'] . '/ojs/add_reviewer/' . $docData['editor_revision_id'] . '/';
 
         // then send the email address of reviewer to AT.
         // Authoring tool must give review access to this article with the submission id
@@ -166,28 +171,31 @@ class FidusWriterPlugin extends GenericPlugin {
     }
 
     /**
+	 * Sends information to Fidus Writer that a given reviewer has been removed
+	 * from a submission so that Fidus Writer also removes the access the reviewer
+	 * has had to the document in question.
      * @param $hookName
      * @param $args
      * @return bool
      */
-    function removeReviewerWebHook($hookName, $args) {
+    function callbackRemoveReviewer($hookName, $args) {
+		$reviewId =& $args[1];
+		$submissionId = $this->getSubmissionIdByReviewId($reviewId);
+		$docData = $this->getFidusWriterLinkData($submissionId);
+		if ($docData === false) {
+			// The article was not connected with Fidus Writer, so we send no
+			// notification.
+			return false;
+		}
 
-        $reviewId =& $args[1];
-        $email = $this->getUserEmailByReviewID($reviewId);
-        $submissionId = $this->getSubmissionIdByReviewID($reviewId);
-        /** @var ReviewAssignmentDAO $RADao */
-        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        /** @var ReviewAssignment $reviewAssignmentObject */
-        $reviewAssignmentObject = $RADao->getById($reviewId);
-        $round = $reviewAssignmentObject->getRound();
-        $docData = $this->getDocData($submissionId, $round);
-        $userName = $this->getUserNameByReviewID($reviewId);
-        $dataArray = ['email' => $email,
-            'rev_id' => $docData['rev_id'],
-            'user_name' => $userName];
-        // Then send the email address of reviewer to authoring tool.
-        // AT must give review aceess to this article with the submission id.
-        $url = $docData['base_url'] . '/ojs/reviewer/del/';
+        $docData = $this->getFidusWriterLinkData($submissionId);
+        $userId = $this->getUserIdByReviewId($reviewId);
+        $dataArray = [
+			'user_id' => $userId,
+			'key' => $this->getApiKey()
+		];
+        // Then send the email address of reviewer to Fidus Writer.
+		$url = $docData['editor_url'] . '/ojs/remove_reviewer/' . $docData['editor_revision_id'] . '/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -221,7 +229,7 @@ class FidusWriterPlugin extends GenericPlugin {
             'round' => $round];  //editor user for logging in
         // Then send the email address of reviewer to authoring tool.
         // AT must give review access to this article with the submission id
-        $docData = $this->getDocData($submissionId, $round-1);
+        $docData = $this->getFidusWriterLinkData($submissionId);
         $url = $docData['base_url'] . '/ojs/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
     }
@@ -234,7 +242,6 @@ class FidusWriterPlugin extends GenericPlugin {
     function callbackLoadCategory($hookName, $args) {
         $category = $args[0];
         $plugins =& $args[1];
-
         switch ($category) {
             case 'gateways':
                 $this->import('FidusWriterGatewayPlugin');
@@ -244,6 +251,11 @@ class FidusWriterPlugin extends GenericPlugin {
         }
         return false;
     }
+
+	function getUser($userId) {
+		$userDao = DAORegistry::getDAO('UserDAO');
+		return $userDao->getById($userId);
+	}
 
 
     /**
@@ -269,31 +281,18 @@ class FidusWriterPlugin extends GenericPlugin {
         return $user->getUsername($userId);
     }
 
-    /**
-     * @param $reviewId
-     * @return mixed
-     */
-    function getUserEmailByReviewID($reviewId) {
-        /** @var UserDAO $userDao **/
-        $userDao = DAORegistry::getDAO('UserDAO');
-        /** @var ReviewAssignmentDAO $RADao */
-        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignment = $RADao->getById($reviewId);
-        /** @var ReviewAssignment $reviewAssignment */
-        $userId = $reviewAssignment->getReviewerId();
-        return $userDao->getUserEmail($userId);
-    }
-
 
     /**
      * @param $reviewId
      * @return mixed
      */
-    function getUserNameByReviewID($reviewId) {
+    function getUserIdByReviewId($reviewId) {
         $userDao = DAORegistry::getDAO('UserDAO');
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
+		// TODO: Find out if there are any problems here if this assignment
+		// contains more than one reviewer.
         if (is_array($reviewAssignmentArray)) {
             $reviewAssignment = $reviewAssignmentArray[0];
         } else {
@@ -301,14 +300,14 @@ class FidusWriterPlugin extends GenericPlugin {
         }
         /** @var ReviewAssignment $reviewAssignment */
         $userId = $reviewAssignment->getReviewerId();
-        return $this->getUserName($userId);
+        return $userId;
     }
 
     /**
      * @param $reviewId
      * @return int
      */
-    function getSubmissionIdByReviewID($reviewId) {
+    function getSubmissionIdByReviewId($reviewId) {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
@@ -350,125 +349,45 @@ class FidusWriterPlugin extends GenericPlugin {
      * @param $dataArray
      * @return string
      */
-    function sendPutRequest($url, $dataArray) {
-        $result = $this->sendRequest('PUT', $url, $dataArray);
-        return $result;
-    }
-
-    /**
-     * @param $url
-     * @param $dataArray
-     * @return string
-     */
     function sendPostRequest($url, $dataArray) {
         $result = $this->sendRequest('POST', $url, $dataArray);
         return $result;
     }
 
-    /**
-     * @return User/Null
-     */
-    function getUserFromSession() {
-        $sessionManager = SessionManager::getManager();
-        $userSession = $sessionManager->getUserSession();
-        $user = $userSession->getUser();
-        return $user;
-    }
-
 
     /**
+	 * We split the title of a submission at all quotation marks and iterate
+	 * over each part.
+	 * If one of these parts is a link to documentReview on a Fidus Writer
+	 * instance, we return the document data found in the link. Otherwise
+	 * we return false.
      * @param $submissionId
      * @param $round
      * @return mixed
      */
-    function getDocData($submissionId, $round) {
+    function getFidusWriterLinkData($submissionId) {
+		$required = array('editor_url', 'editor_revision_id', 'submission_id', 'version');
         $submissionDao = Application::getSubmissionDAO();
         /** @var Submission */
         $submission = $submissionDao->getById($submissionId);
-        $submissionTitle = $submission->getTitle(AppLocale::getLocale());
-        $submissionArrayInString= [];
-        $submissionInString = [];
-        $matches = explode('"', $submissionTitle);
-        $count = count($matches);
-        for ($counter = 0; $counter < $count -1 ; $counter++ ) {
-            $position = strpos($matches[$counter], "/ojs/revision/");
+        $submissionTitle = $submission->getTitle();
+		$result = false;
+        $titleParts = explode('"', $submissionTitle);
+		foreach ($titleParts as $part) {
+			$position = strpos($part, "documentReview?editor_url");
             if ($position !== false) {
-                $urlMatch = explode('/ojs/revision/', $matches[$counter]);
-                $baseUrl = $urlMatch[0];
-                $revId = $urlMatch[1];
-                $afterUrlMatch = explode('>Round', $matches[$counter + 1]);
-                if(is_array($afterUrlMatch)){
-                    if(count($afterUrlMatch) === 2){
-                        $roundMatch = explode('</a>', $afterUrlMatch[1]);
-                        $round = $roundMatch[0];
-                        $round = str_replace(' ', '', $round);
-
-                    } else {
-                        $round = "1";
-                    }
-                }
-                $submissionInString['base_url']= $baseUrl;
-                $submissionInString['rev_id']= $revId;
-                $submissionInString['round']= $round;
-                $submissionArrayInString[]= $submissionInString;
-            }
-        }
-        foreach ($submissionArrayInString as $subInString){
-            if($subInString['round'] == $round){
-                $docData = $subInString;
-            }
-        }
-        return $docData;
-    }
-
-    /**
-     * @param $submissionId
-     * @return mixed
-     */
-    function getReviewerEmailBySubmissionId($submissionId) {
-        /** @var UserDAO $userDao */
-        $userDao = DAORegistry::getDAO('UserDAO');
-        /** @var ReviewAssignmentDAO $RADao */
-        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
-        $reviewAssignment = NULL;
-        if (is_array($reviewAssignmentArray)) {
-            foreach ($reviewAssignmentArray as $reviewAssignmentElement) {
-                $reviewAssignment = $reviewAssignmentElement;
-            }
-        } else {
-            $reviewAssignment = $reviewAssignmentArray;
-        }
-
-        if (is_null($reviewAssignment)) { //it means its round 0 and no reviewer is assigned yet
-            return NULL;
-        }
-        /** @var ReviewAssignment $reviewAssignment */
-        $userId = $reviewAssignment->getReviewerId();
-        return $userDao->getUserEmail($userId);
-    }
-
-    /**
-     * @param $submissionId
-     * @return string
-     */
-    function getReviewerUserNameBySubmissionId($submissionId) {
-        /** @var ReviewAssignmentDAO $RADao */
-        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignmentArray = $RADao->getBySubmissionId($submissionId);
-        $reviewAssignment = NULL;
-        if (is_array($reviewAssignmentArray)) {
-            foreach ($reviewAssignmentArray as $reviewAssignmentElement)
-                $reviewAssignment = $reviewAssignmentElement;
-        } else {
-            $reviewAssignment = $reviewAssignmentArray;
-        }
-        if (is_null($reviewAssignment)) { //it means its round 0 and no reivewer is assigned yet
-            return NULL;
-        }
-        /** @var ReviewAssignment $reviewAssignment */
-        $userId = $reviewAssignment->getReviewerId();
-        return $this->getUserName($userId);
+				// The string contains a link to what is most likely a Fidus
+				// Writer instance. We now extract the other data from the link
+				// and return it.
+				$data = [];
+				parse_str(parse_url($part, PHP_URL_QUERY), $data);
+				if(count(array_intersect_key(array_flip($required), $data)) === count($required)) {
+					// All the fields are here, we can safely return this.
+					$result = $data;
+				}
+			}
+		}
+        return $result;
     }
 
 

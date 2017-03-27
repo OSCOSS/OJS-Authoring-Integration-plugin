@@ -161,8 +161,15 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                         $this->sendJsonResponse($response);
 
                         break;
-                    case 'submit':
+                    case 'authorSubmit':
                         // in case author submits an article
+                        $key = $_GET['key'];
+                        if ($this->getApiKey() !== $key) {
+                            // Not correct api key.
+                            $error = "Incorrect API Key";
+                            $this->sendErrorResponse($error);
+                            break;
+                        }
                         $resultArray = $this->saveArticleWithAuthor();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
@@ -173,7 +180,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                         $this->sendJsonResponse($response);
                         break;
                     case 'articleReviews':
-                        // in case a reviewer submit the article review
+                        // in case a reviewer submits the article review
                         $resultArray = $this->saveArticleReview();
                         $response = array(
                             "journal_id" => $resultArray["journalId"],
@@ -220,7 +227,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * @return string
      */
     function getPOSTPayloadVariable($varName) {
-        error_log("logging:" . implode($_SERVER, ","));
         //todo: find the cors_token from header , check of is in $_SERVER or other places.
         //   error_log("loggingCRF:". $_SERVER["csrf_token"],0);  //csrfToken
         if (isset($_POST[$varName])) {
@@ -453,7 +459,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     function updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version) {
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
-        //error_log("MOINMOIN0:" . var_export([$submissionId,$versionNum, $submission], true), 0);
 
         if ($submission === NUll || $submission === "") {
             throw new Exception("Error: no submission with given submissionId $submissionId exists");
@@ -516,7 +521,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                 $reviewAssignment = $reviewAssignmentObject;
             }
         }
-        # error_log(print_r( $reviewAssignmentsArray));
 
         if ($reviewAssignment === NULL) {
             throw new Exception('Error: user with email address ' . $emailAddress . ' has not right to review this article');
@@ -716,7 +720,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         // There seems to be no direct connection between authors and users,
         // so we make a guess.
         // If the user is in the author group for the journal AND
-        // the email is the same as that of the author who si set as the
+        // the email is the same as that of the author who is set as the
         // primary contact, we assume this is the author.
         // OBS! This means an author who changes the email address of his OJS
         // user account will run into problems.

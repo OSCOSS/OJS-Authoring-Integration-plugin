@@ -59,6 +59,14 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     }
 
     /**
+     * Store the path value iin the parent plugin so that it is accessible from
+     * both.
+     */
+    public function getPluginUrl() {
+        return $this->getFidusWriterPlugin()->getGatewayPluginUrl();
+    }
+
+    /**
      * Override the builtin to get the correct template path.
      * @return string
      */
@@ -88,14 +96,12 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         return $this->getFidusWriterPlugin()->getApiKey();
     }
 
+
     public function getApiVersion() {
         return "1.0";
     }
 
-    public function getPluginUrl() {
-        $request =& Registry::get('request');
-        return $request->getBaseUrl() . '/index.php/index/gateway/plugin/FidusWriterGatewayPlugin';
-    }
+
 
     /**
      * Handle all requests for this plugin.
@@ -138,11 +144,11 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                     case 'documentReview':
                         // Forward the user to the editor logged in with
                         // appropriate rights.
-                        $editorUrl = $_GET['editor_url'];
-                        $editorRevisionId = $_GET['editor_revision_id'];
-                        $submissionId = intval($_GET['submission_id']);
-                        $version = $_GET['version'];
-                        $this->loginEditor($editorUrl, $editorRevisionId, $submissionId, $version);
+                        $submissionId = intval($_GET['submissionId']);
+                        $fwPlugin = $this->getFidusWriterPlugin();
+                        $fidusRevisionId = $fwPlugin->getSubmissionSetting($submissionId, 'fidusRevisionId');
+                        $fidusUrl = $fwPlugin->getSubmissionSetting($submissionId, 'fidusUrl');
+                        $this->loginFidusWriter($fidusUrl, $fidusRevisionId, $submissionId);
                         break;
                     default:
                         $error = "OJS Integration REST Plugin: Not a valid GET request";
@@ -314,57 +320,41 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     }
 
     /**
-     * @param Submission $submission
-     * @return Submission
-     */
-    function setArticleSubmissionVariables($submission, $journalId, $filename, $title) {
-        //version numbers become clickable
-        // update the link part is left
-        //Fw side and test is left
-
-
-        /** Submission */
-        // $journalId in OJS is same as $contextId in PKP lib.
-        $submission->setContextId($journalId);
-        $submission->setDateSubmitted(Core::getCurrentDate());
-
-        $submission->setLocale($this->defaultLocale);
-        $submission->setSubject($title, $this->defaultLocale);
-        //$submission->setFileName($filename, $this->defaultLocale);
-        // setting data as article_url did not work,
-        // instead we use the file_name to store it and the title will keep it.
-        //$submission->setData("article_url", $articleUrl);
-        return $submission;
-    }
-
-    /**
      * Takes an article submission from author and either updates an existing
      * submission or creates a new one.
      * @return array
      */
     function saveArticleWithAuthor() {
         // Get all the variables used both when saving and updating submissions.
-        $editorUrl = $this->getPOSTPayloadVariable("editor_url");
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
-        $editorRevisionId = $this->getPOSTPayloadVariable("editor_revision_id");
-        $version = $this->getPOSTPayloadVariable("version");
-        $title = $this->getPOSTPayloadVariable("title");
-        $journalId = 0;
-        $userId = 0;
-        if ($submissionId !== "") {
-            $this->updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version);
-        } else {
-            $journalId = $this->getPOSTPayloadVariable("journal_id");
-            $filename = $this->getPOSTPayloadVariable("file_name");
-            $submissionId = $this->saveNewArticleSubmission($editorUrl, $title, $editorRevisionId, $journalId, $filename);
+        $submissionDao = Application::getSubmissionDAO();
+        $locale = AppLocale::getLocale();
 
+        if ($submissionId !== "") {
+            // This is an update to an existing submission. We just check that it
+            // does exist.
+            $submission = $submissionDao->getById($submissionId);
+
+            if ($submission === NUll || $submission === "") {
+                throw new Exception("Error: no submission with given submissionId $submissionId exists");
+            }
+
+            //$this->updateArticleSubmission($fidusUrl, $title, $fidusRevisionId, $submissionId, $version);
+        } else {
+            // This is a new submission so we create it in the database
+            $title = $this->getPOSTPayloadVariable("title");
+            $journalId = $this->getPOSTPayloadVariable("journal_id");
+            $submissionId = $this->createNewSubmission($title, $journalId);
+
+            // We also create a user for the author
             $emailAddress = $this->getPOSTPayloadVariable("email");
             $firstName = $this->getPOSTPayloadVariable("first_name");
             $lastName = $this->getPOSTPayloadVariable("last_name");
             $user = $this->getOrCreateUser($emailAddress, $firstName, $lastName);
             $userId = $user->getId();
 
-            //check if author exist in db
+            // And we create an author for the user.
+            // Notice: authors are apparently not connected to users in OJS.
             $affiliation = $this->getPOSTPayloadVariable("affiliation");
             $country = $this->getPOSTPayloadVariable("country");
             $authorUrl = $this->getPOSTPayloadVariable("author_url");
@@ -377,99 +367,67 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             if ($authorUserGroupId) {
                 $stageAssignmentDao->build($submissionId, $authorUserGroupId, $userId);
             }
+            // Add the fidusUrl to the db entry of the submission.
+            // Together with the 'fidusRevisionId', OJS will be able to create
+            // a link to send the user to FW to edit the file.
+            // Is it a good idea to write arbitrary data to the OJS database?
+            // Probably not, but unless someone tells us how to do this better,
+            // this seems to be the easiest and cleanest way.
+            $fidusUrl = $this->getPOSTPayloadVariable("fidus_url");
+            $submissionDao->updateSetting($submissionId, 'fidusUrl', [none => $fidusUrl], 'string', True);
         }
+
+        // See above comment about 'fidusUrl'. The revision Id will be updated with
+        // every new revision on Fidus Writer.
+        $fidusRevisionId = $this->getPOSTPayloadVariable("fidus_revision_id");
+        $submissionDao->updateSetting($submissionId, 'fidusRevisionId', [none => $fidusRevisionId], 'string', True);
 
         $resultArray = array(
             "journalId" => $journalId,
             "submissionId" => $submissionId,
-            "userId" => $userId,
+            "userId" => $userId
         );
         return $resultArray;
     }
 
     /**
-     * Creates a link that is set on the title of the submission. Clicking the
-     * link will make the user be sent to the editor and be logged in there.
-     * @param $editorUrl
-     * @param $title
-     * @param $submissionId
-     * @param $editorRevisionId
-     * @param $version
-     * @return string
-     */
-    function makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, $version) {
-        $signInUrl = $this->getPluginUrl() . '/documentReview?editor_url=' . $editorUrl . '&submission_id=' . $submissionId . '&editor_revision_id=' . $editorRevisionId . '&version=' . $version;
-        $round = $version + 1;
-        $linkToOJS = $title . '<a href="' . $signInUrl . '"> Round ' . $round .'</a>';
-        return $linkToOJS;
-    }
-
-    /**
      * @return mixed
      */
-    function saveNewArticleSubmission($editorUrl, $title, $editorRevisionId, $journalId, $filename) {
+    function createNewSubmission($title, $journalId) {
+        $locale = AppLocale::getLocale();
+
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->newDataObject();
         $submission->setStatus(STATUS_QUEUED);
         $submission->setSubmissionProgress(0);
-        $submission = $this->setArticleSubmissionVariables($submission, $journalId, $filename, $title);
-        //$workflowStageDao = DAORegistry::getDAO('WorkflowStageDAO');
-        //  $submission->setStageId(WorkflowStageDAO::getIdFromPath($node->getAttribute('stage')));
+        // $journalId in OJS is same as $contextId in PKP lib.
+        $submission->setContextId($journalId);
+        $submission->setDateSubmitted(Core::getCurrentDate());
+        $submission->setLocale($locale);
+        $submission->setSubject($title, $locale);
         // WORKFLOW_STAGE_ID_SUBMISSION is the stage a submission is in right
         // when it is first submitted (== 1 in database).
         $submission->setStageId(WORKFLOW_STAGE_ID_SUBMISSION);
-        //$submission->setCopyrightNotice($this->context->getLocalizedSetting('copyrightNotice'), $this->getData('locale'));
-
+        $sectionDao = Application::getSectionDAO();
         // Sections are different parts of a journal, we only allow submission
         // to the default section ('Articles').
         // TODO: Extend the api to select which section to submit to.
         // https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementJournalSections.html
-        $sectionDao = Application::getSectionDAO();
-        $section = $sectionDao->getByTitle("Articles", $journalId, $this->defaultLocale);
+        $section = $sectionDao->getByTitle("Articles", $journalId, $locale);
         if ($section !== NULL) {
             $sectionId = $section->getId();
         } else {
             $sectionId = 1;
         }
         $submission->setData("sectionId", $sectionId);
+        $submission->setTitle($title, $locale);
+        $submission->setCleanTitle($title, $locale);
         // Insert the submission
         $submissionId = $submissionDao->insertObject($submission);
-
-        // We first save the submission so that we get an ID for it. We need
-        // this ID for the link in the title, so after saving we update the title
-        // (which will cause another save).
-        $signInURL = $this->makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, 0);
-
-        $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $signInURL], 'string', True);
-        $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $sigInURL], 'string', True);
-
-        //$submission->setTitle($linkToEditor, $this->defaultLocale);
-        //$submission->setCleanTitle($linkToEditor, $this->defaultLocale);
 
         return $submissionId;
     }
 
-
-    /**
-     * @param $submissionId
-     * @param $versionNum
-     * @return Submission
-     * @throws Exception
-     */
-    function updateArticleSubmission($editorUrl, $title, $editorRevisionId, $submissionId, $version) {
-        $submissionDao = Application::getSubmissionDAO();
-        $submission = $submissionDao->getById($submissionId);
-
-        if ($submission === NUll || $submission === "") {
-            throw new Exception("Error: no submission with given submissionId $submissionId exists");
-        }
-
-        $signInURL = $this->makeSignInURL($editorUrl, $title, $submissionId, $editorRevisionId, $version);
-
-        /** @var ArticleDAO $submissionDao * */
-        $submissionDao->updateSetting($submissionId, 'title', [$this->defaultLocale => $signInURL], 'string', True);
-        $submissionDao->updateSetting($submissionId, 'cleanTitle', [$this->defaultLocale => $sigInURL], 'string', True);
-    }
 
     /**
      * Takes an article review submission from reviewers
@@ -578,6 +536,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      */
     function saveAuthor($articleId, $journalId, $emailAddress, $firstName, $lastName, $affiliation, $country, $authorUrl, $biography) {
         // Set user to initial author
+        $locale = AppLocale::getLocale();
 
         $authorDao = DAORegistry::getDAO('AuthorDAO');
         /** @var Author $author */
@@ -585,11 +544,11 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $author->setFirstName($firstName);
         $author->setMiddleName("");
         $author->setLastName($lastName);
-        $author->setAffiliation($affiliation, $this->defaultLocale);
+        $author->setAffiliation($affiliation, $locale);
         $author->setCountry($country);
         $author->setEmail($emailAddress);
         $author->setUrl($authorUrl);
-        $author->setBiography($biography, $this->defaultLocale);
+        $author->setBiography($biography, $this->locale);
         $author->setPrimaryContact(true);
         $author->setIncludeInBrowse(true);
 
@@ -762,7 +721,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * @param $userId
      * @param $accessRights
      */
-    function getLoginToken($editorUrl, $userRole, $journalId, $userId) {
+    function getLoginToken($fidusUrl, $userRole, $journalId, $userId) {
 
         $dataArray = array(
             'user_id' => $userId,
@@ -771,7 +730,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             'key' => $this->getApiKey()
         );
 
-        $request = curl_init($editorUrl . '/ojs/get_login_token/?' . http_build_query($dataArray));
+        $request = curl_init($fidusUrl . '/ojs/get_login_token/?' . http_build_query($dataArray));
         curl_setopt($request, CURLOPT_RETURNTRANSFER, true);
         $result = json_decode(curl_exec($request), true);
         return $result['token'];
@@ -779,14 +738,14 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
 
 
     /**
-     * Forwards user to the editor after checking access rights.
-     * @param $editorUrl
-     * @param $editorRevisionId
+     * Forwards user to Fidus Writer after checking access rights.
+     * @param $fidusUrl
+     * @param $fidusRevisionId
      * @param $submissionId
      * @param $version
      * @return string
      */
-    function loginEditor($editorUrl, $editorRevisionId, $submissionId, $version) {
+    function loginFidusWriter($fidusUrl, $fidusRevisionId, $submissionId) {
 
         $user = $this->getUserFromSession();
 
@@ -798,16 +757,13 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         }
 
         $userId = $user->getId();
-        $loginToken = $this->getLoginToken($editorUrl, $userRole, $journalId, $userId);
-
+        $loginToken = $this->getLoginToken($fidusUrl, $userRole, $journalId, $userId);
         echo '
 <html>
  <body onload="document.frm1.submit()">
-   <form method="post" action="' . $editorUrl . '/ojs/revision/' . $editorRevisionId . '/" name = "frm1" class="inline">
+   <form method="post" action="' . $fidusUrl . '/ojs/revision/' . $fidusRevisionId . '/" name = "frm1" class="inline">
     <input type="hidden" name="token" value="' . $loginToken . '">
-    <button type="submit" name="submit_param" value="submit_value" class="link-button">
-    Jumping to the editor ...
-    </button>
+    <button type="submit" name="submit_param" style="display=none;" value="submit_value" class="link-button"></button>
   </form>
  </body >
 </html >';

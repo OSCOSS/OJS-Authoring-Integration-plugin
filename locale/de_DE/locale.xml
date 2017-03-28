@@ -13,4 +13,5 @@
 	<message key="plugins.generic.fidusWriter.settings.apiKey.description">Bitte wähle einen geheimen API Schlüssel. Mit dem Schlüssel werden Fidus Writer Isntanxen direkt mit dieser OJS Instanz kommunizieren können.</message>
 	<message key="plugins.generic.fidusWriter.settings.apiKey">Fidus Writer API Schlüssel</message>
 	<message key="plugins.generic.fidusWriter.manager.settings.apiKeyRequired">Der Fidus Writer API Schlüssel ist vorgeschrieben!</message>
+	<message key="plugins.generic.fidusWriter.linkText">Dokument in Fidus Writer öffnen</message>
 </locale>

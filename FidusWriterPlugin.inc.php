@@ -28,6 +28,7 @@ class FidusWriterPlugin extends GenericPlugin {
 			HookRegistry::register('reviewassignmentdao::_insertobject', array($this, 'callbackAddReviewer'));
 			HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'callbackRemoveReviewer'));
 			HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
+			HookRegistry::register('TemplateManager::fetch', array($this, 'templateFetchCallback'));
             return true;
         }
         return false;
@@ -132,11 +133,95 @@ class FidusWriterPlugin extends GenericPlugin {
 
     // END STANDARD PLUGIN FUNCTIONS
 
+	function getGatewayPluginUrl() {
+        $request =& Registry::get('request');
+        return $request->getBaseUrl() . '/index.php/index/gateway/plugin/FidusWriterGatewayPlugin';
+    }
 
     function getApiKey() {
         return $this->getSetting(CONTEXT_ID_NONE, 'apiKey');
     }
 
+	/**
+	* Retrieve a submission setting from the DB. While SubmissionDAO->updateSetting(...);
+	* allows for the saving of setting data with arbitrary names, an afternoon of
+	* grepping through the soucecode has not produced any way of retriveing these
+	* values. If there is such a way, we should probably replace this.
+	* Note: we are not looking at the localization setting here!
+	* @param $hookName
+	* @param $args
+	* @return bool
+	*/
+	function getSubmissionSetting($submissionId, $settingName) {
+		$submissionDao = Application::getSubmissionDAO();
+		$result = $submissionDao->retrieve(
+			'SELECT setting_value
+			FROM submission_settings
+			WHERE setting_name = ? and submission_id = ? ;',
+			array(
+				$settingName,
+				$submissionId
+			)
+		);
+		$returner = false;
+		if ($result->RecordCount() != 0) {
+			$returner = $result->fields[0];
+		}
+
+		$result->Close();
+		return $returner;
+	}
+
+
+	/**
+	 * We override the template for the submission file grid in case of a Fidus
+	 * based submission. If the submission is connected to a Fidus Writer instance,
+	 * we instead show a login link to get to the fidus writer instance (via the
+	 * Fidus Writer Gateway plugin).
+	 * @param $hookName
+     * @param $args
+     * @return bool
+     */
+	public function templateFetchCallback($hookName, $args) {
+		//$request = $this->getRequest();
+		//$router = $request->getRouter();
+		//$dispatcher = $router->getDispatcher();
+		//$journal = $request->getJournal();
+		//$journalId = $journal->getId();
+		$templateManager = $args[0];
+		$templateName = $args[1];
+		if ($templateName == 'controllers/grid/grid.tpl') {
+			$grid = $templateManager->get_template_vars('grid');
+			$title = $grid->getTitle();
+			if ($title==='submission.submit.submissionFiles' || $title==='reviewer.submission.reviewFiles') {
+				// Not sure if there is another way to find this information,
+				// but the submissionId is part of the URL of this page.
+				$submissionId =  intval($_GET['submissionId']);
+				$fidusRevisionId = $this->getSubmissionSetting($submissionId, 'fidusRevisionId');
+				if ($fidusRevisionId != false) {
+					// This submission is linked to a Fidus Writer instance, so present
+					// link rather the file overview.
+					// If the submission file section is requested, we override the
+					// entire grid with a link to the file in Fidus Writer. This way
+					// there are no surprises of users accidentally trying to add
+					// more files or similar.
+
+					$result =& $args[4];
+					$result = '
+					<div class="pkp_controllers_grid">
+						<div class="header">
+						<h4><a href="' . $this->getGatewayPluginUrl() . '/documentReview?submissionId=' . $submissionId . '">
+							' . __('plugins.generic.fidusWriter.linkText') . '
+						</a></h4>
+						</div>
+					</div>';
+					return true;
+				}
+
+			}
+
+		}
+	}
 
     /**
 	 * Sends information about a newly registered reviewer for a specific submission
@@ -148,8 +233,8 @@ class FidusWriterPlugin extends GenericPlugin {
     function callbackAddReviewer($hookName, $args) {
         $row =& $args[1];
         $submissionId = $row[0];
-		$docData = $this->getFidusWriterLinkData($submissionId);
-		if ($docData === false) {
+		$fidusRevisionId = $this->getSubmissionSetting($submissionId, 'fidusRevisionId');
+		if ($fidusRevisionId === false) {
 			// The article was not connected with Fidus Writer, so we send no
 			// notification.
 			return false;
@@ -162,7 +247,8 @@ class FidusWriterPlugin extends GenericPlugin {
 			'user_id' => $reviewerId,
 			'key' => $this->getApiKey()
 		];
-        $url = $docData['editor_url'] . '/ojs/add_reviewer/' . $docData['editor_revision_id'] . '/';
+		$fidusUrl = $this->getSubmissionSetting($submissionId, 'fidusUrl');
+        $url = $fidusUrl . '/ojs/add_reviewer/' . $fidusRevisionId . '/';
 
         // then send the email address of reviewer to AT.
         // Authoring tool must give review access to this article with the submission id
@@ -181,21 +267,22 @@ class FidusWriterPlugin extends GenericPlugin {
     function callbackRemoveReviewer($hookName, $args) {
 		$reviewId =& $args[1];
 		$submissionId = $this->getSubmissionIdByReviewId($reviewId);
-		$docData = $this->getFidusWriterLinkData($submissionId);
-		if ($docData === false) {
+		$fidusRevisionId = $this->getSubmissionSetting($submissionId, 'fidusRevisionId');
+
+		if ($fidusRevisionId === false) {
 			// The article was not connected with Fidus Writer, so we send no
 			// notification.
 			return false;
 		}
 
-        $docData = $this->getFidusWriterLinkData($submissionId);
         $userId = $this->getUserIdByReviewId($reviewId);
         $dataArray = [
 			'user_id' => $userId,
 			'key' => $this->getApiKey()
 		];
         // Then send the email address of reviewer to Fidus Writer.
-		$url = $docData['editor_url'] . '/ojs/remove_reviewer/' . $docData['editor_revision_id'] . '/';
+		$fidusUrl = $this->getSubmissionSetting($submissionId, 'fidusUrl');
+		$url = $fidusUrl. '/ojs/remove_reviewer/' . $fidusRevisionId . '/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -229,8 +316,12 @@ class FidusWriterPlugin extends GenericPlugin {
             'round' => $round];  //editor user for logging in
         // Then send the email address of reviewer to authoring tool.
         // AT must give review access to this article with the submission id
-        $docData = $this->getFidusWriterLinkData($submissionId);
-        $url = $docData['base_url'] . '/ojs/newsubmissionrevision/';
+		$fidusUrl = $this->getSubmissionSetting($submissionId, 'fidusUrl');
+		if ($fidusUrl == false) {
+			// Not connected to Fidus Writer
+			return false;
+		}
+        $url = $fidusUrl . '/ojs/newsubmissionrevision/';
         $result = $this->sendPostRequest($url, $dataArray);
     }
 
@@ -356,51 +447,13 @@ class FidusWriterPlugin extends GenericPlugin {
 
 
     /**
-	 * We split the title of a submission at all quotation marks and iterate
-	 * over each part.
-	 * If one of these parts is a link to documentReview on a Fidus Writer
-	 * instance, we return the document data found in the link. Otherwise
-	 * we return false.
-     * @param $submissionId
-     * @param $round
-     * @return mixed
-     */
-    function getFidusWriterLinkData($submissionId) {
-		$required = array('editor_url', 'editor_revision_id', 'submission_id', 'version');
-        $submissionDao = Application::getSubmissionDAO();
-        /** @var Submission */
-        $submission = $submissionDao->getById($submissionId);
-        $submissionTitle = $submission->getTitle();
-		$result = false;
-        $titleParts = explode('"', $submissionTitle);
-		foreach ($titleParts as $part) {
-			$position = strpos($part, "documentReview?editor_url");
-            if ($position !== false) {
-				// The string contains a link to what is most likely a Fidus
-				// Writer instance. We now extract the other data from the link
-				// and return it.
-				$data = [];
-				parse_str(parse_url($part, PHP_URL_QUERY), $data);
-				if(count(array_intersect_key(array_flip($required), $data)) === count($required)) {
-					// All the fields are here, we can safely return this.
-					$result = $data;
-				}
-			}
-		}
-        return $result;
-    }
-
-
-    /**
      * @param $submissionId
      * @return mixed
      */
     function getAuthorEmailBySubmissionId($submissionId) {
-        error_log("submissionId: ". $submissionId,0);
 
         /** @var AuthorDao $authorDao */
         $authorDao = DAORegistry::getDAO('AuthorDAO');
-        error_log("AuthorDao: ". var_dump($authorDao),0);
         $authors = $authorDao->getBySubmissionId($submissionId);
         $email = "";
         foreach ($authors as $author){
@@ -408,7 +461,6 @@ class FidusWriterPlugin extends GenericPlugin {
             $email = $author->getEmail(); //get the first author
             break;
         }
-        error_log("author_email: ". $email,0);
         //$email = $author->getEmail();
         return $email;
     }

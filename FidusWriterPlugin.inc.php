@@ -29,6 +29,8 @@ class FidusWriterPlugin extends GenericPlugin {
 			HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'callbackRemoveReviewer'));
 			HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'templateFetchCallback'));
+			// Add fields fidusRevisionId and fidusUri to submissions
+			HookRegistry::register('articledao::getAdditionalFieldNames', array($this, 'callbackAdditionalFieldNames'));
             return true;
         }
         return false;
@@ -143,35 +145,29 @@ class FidusWriterPlugin extends GenericPlugin {
     }
 
 	/**
-	* Retrieve a submission setting from the DB. While SubmissionDAO->updateSetting(...);
-	* allows for the saving of setting data with arbitrary names, an afternoon of
-	* grepping through the soucecode has not produced any way of retriveing these
-	* values. If there is such a way, we should probably replace this.
-	* Note: we are not looking at the localization setting here!
+	* Retrieve a submission setting from the DB. We use this to get fidusUrl and
+	* fidusRevisionId.
 	* @param $hookName
 	* @param $args
 	* @return bool
 	*/
 	function getSubmissionSetting($submissionId, $settingName) {
 		$submissionDao = Application::getSubmissionDAO();
-		$result = $submissionDao->retrieve(
-			'SELECT setting_value
-			FROM submission_settings
-			WHERE setting_name = ? and submission_id = ? ;',
-			array(
-				$settingName,
-				$submissionId
-			)
-		);
-		$returner = false;
-		if ($result->RecordCount() != 0) {
-			$returner = $result->fields[0];
-		}
-
-		$result->Close();
-		return $returner;
+		$submission = $submissionDao->getById($submissionId);
+		return $submission->getData($settingName);
 	}
 
+
+	/**
+	 * Add fieldnames to link submissions to revisions in Fidus Writer
+	 * instances.
+	 * @see DAO::getAdditionalFieldNames()
+	 */
+	function callbackAdditionalFieldNames($hookName, $args) {
+		$returner =& $args[1];
+		$returner[] = 'fidusUri';
+		$returner[] = 'fidusRevisionId';
+	}
 
 	/**
 	 * We override the template for the submission file grid in case of a Fidus
@@ -183,16 +179,12 @@ class FidusWriterPlugin extends GenericPlugin {
      * @return bool
      */
 	public function templateFetchCallback($hookName, $args) {
-		//$request = $this->getRequest();
-		//$router = $request->getRouter();
-		//$dispatcher = $router->getDispatcher();
-		//$journal = $request->getJournal();
-		//$journalId = $journal->getId();
 		$templateManager = $args[0];
 		$templateName = $args[1];
 		if ($templateName == 'controllers/grid/grid.tpl') {
 			$grid = $templateManager->get_template_vars('grid');
 			$title = $grid->getTitle();
+
 			if ($title==='submission.submit.submissionFiles' || $title==='reviewer.submission.reviewFiles') {
 				// Not sure if there is another way to find this information,
 				// but the submissionId is part of the URL of this page.

@@ -327,24 +327,31 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     function saveArticleWithAuthor() {
         // Get all the variables used both when saving and updating submissions.
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
+        // The revision Id will be updated with every update from Fidus Writer.
+        // It represents the ID used in the Fidus Writer database.
+        $fidusRevisionId = $this->getPOSTPayloadVariable("fidus_revision_id");
         $submissionDao = Application::getSubmissionDAO();
         $locale = AppLocale::getLocale();
-
         if ($submissionId !== "") {
-            // This is an update to an existing submission. We just check that it
-            // does exist.
+            // This is an update to an existing submission. We check that it exists,
+            // thereafter we update the revision id.
             $submission = $submissionDao->getById($submissionId);
 
             if ($submission === NUll || $submission === "") {
                 throw new Exception("Error: no submission with given submissionId $submissionId exists");
             }
 
-            //$this->updateArticleSubmission($fidusUrl, $title, $fidusRevisionId, $submissionId, $version);
+            $submissionDao->updateSetting($submissionId, 'fidusRevisionId', [none => $fidusRevisionId], 'string', True);
+
         } else {
             // This is a new submission so we create it in the database
             $title = $this->getPOSTPayloadVariable("title");
             $journalId = $this->getPOSTPayloadVariable("journal_id");
-            $submissionId = $this->createNewSubmission($title, $journalId);
+            // Add the fidusUrl to the db entry of the submission.
+            // Together with the 'fidusRevisionId', OJS will be able to create
+            // a link to send the user to FW to edit the file.
+            $fidusUrl = $this->getPOSTPayloadVariable("fidus_url");
+            $submissionId = $this->createNewSubmission($title, $journalId, $fidusUrl, $fidusRevisionId);
 
             // We also create a user for the author
             $emailAddress = $this->getPOSTPayloadVariable("email");
@@ -367,20 +374,8 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             if ($authorUserGroupId) {
                 $stageAssignmentDao->build($submissionId, $authorUserGroupId, $userId);
             }
-            // Add the fidusUrl to the db entry of the submission.
-            // Together with the 'fidusRevisionId', OJS will be able to create
-            // a link to send the user to FW to edit the file.
-            // Is it a good idea to write arbitrary data to the OJS database?
-            // Probably not, but unless someone tells us how to do this better,
-            // this seems to be the easiest and cleanest way.
-            $fidusUrl = $this->getPOSTPayloadVariable("fidus_url");
-            $submissionDao->updateSetting($submissionId, 'fidusUrl', [none => $fidusUrl], 'string', True);
-        }
 
-        // See above comment about 'fidusUrl'. The revision Id will be updated with
-        // every new revision on Fidus Writer.
-        $fidusRevisionId = $this->getPOSTPayloadVariable("fidus_revision_id");
-        $submissionDao->updateSetting($submissionId, 'fidusRevisionId', [none => $fidusRevisionId], 'string', True);
+        }
 
         $resultArray = array(
             "journalId" => $journalId,
@@ -393,7 +388,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     /**
      * @return mixed
      */
-    function createNewSubmission($title, $journalId) {
+    function createNewSubmission($title, $journalId, $fidusUrl, $fidusRevisionId) {
         $locale = AppLocale::getLocale();
 
         $submissionDao = Application::getSubmissionDAO();
@@ -423,6 +418,11 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $submission->setTitle($title, $locale);
         $submission->setCleanTitle($title, $locale);
         // Insert the submission
+
+        // Set fidus writer related fields.
+        $submission->setData("fidusUrl", $fidusUrl);
+        $submission->setData("fidusRevisionId", $fidusRevisionId);
+
         $submissionId = $submissionDao->insertObject($submission);
 
         return $submissionId;
@@ -548,7 +548,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $author->setCountry($country);
         $author->setEmail($emailAddress);
         $author->setUrl($authorUrl);
-        $author->setBiography($biography, $this->locale);
+        $author->setBiography($biography, $locale);
         $author->setPrimaryContact(true);
         $author->setIncludeInBrowse(true);
 

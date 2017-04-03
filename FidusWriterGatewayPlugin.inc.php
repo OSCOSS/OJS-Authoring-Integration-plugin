@@ -145,10 +145,8 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                         // Forward the user to the editor logged in with
                         // appropriate rights.
                         $submissionId = intval($_GET['submissionId']);
-                        $fwPlugin = $this->getFidusWriterPlugin();
-                        $fidusRevisionId = $fwPlugin->getSubmissionSetting($submissionId, 'fidusRevisionId');
-                        $fidusUrl = $fwPlugin->getSubmissionSetting($submissionId, 'fidusUrl');
-                        $this->loginFidusWriter($fidusUrl, $fidusRevisionId, $submissionId);
+                        $versionString = $_GET['version'];
+                        $this->loginFidusWriter($submissionId, $versionString);
                         break;
                     default:
                         $error = "OJS Integration REST Plugin: Not a valid GET request";
@@ -176,7 +174,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                             $this->sendErrorResponse($error);
                             break;
                         }
-                        $resultArray = $this->saveArticleWithAuthor();
+                        $resultArray = $this->authorSubmit();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
                             "journal_id" => $resultArray["journalId"],
@@ -324,12 +322,11 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * submission or creates a new one.
      * @return array
      */
-    function saveArticleWithAuthor() {
+    function authorSubmit() {
         // Get all the variables used both when saving and updating submissions.
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
         // The revision Id will be updated with every update from Fidus Writer.
         // It represents the ID used in the Fidus Writer database.
-        $fidusRevisionId = $this->getPOSTPayloadVariable("fidus_revision_id");
         $submissionDao = Application::getSubmissionDAO();
         $locale = AppLocale::getLocale();
         if ($submissionId !== "") {
@@ -341,17 +338,18 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                 throw new Exception("Error: no submission with given submissionId $submissionId exists");
             }
 
-            $submissionDao->updateSetting($submissionId, 'fidusRevisionId', [none => $fidusRevisionId], 'string', True);
+            //$submissionDao->updateSetting($submissionId, 'fidusId', [none => $fidusId], 'string', True);
 
         } else {
             // This is a new submission so we create it in the database
             $title = $this->getPOSTPayloadVariable("title");
             $journalId = $this->getPOSTPayloadVariable("journal_id");
+            $fidusId = $this->getPOSTPayloadVariable("fidus_id");
             // Add the fidusUrl to the db entry of the submission.
-            // Together with the 'fidusRevisionId', OJS will be able to create
+            // Together with the 'fidusId', OJS will be able to create
             // a link to send the user to FW to edit the file.
             $fidusUrl = $this->getPOSTPayloadVariable("fidus_url");
-            $submissionId = $this->createNewSubmission($title, $journalId, $fidusUrl, $fidusRevisionId);
+            $submissionId = $this->createNewSubmission($title, $journalId, $fidusUrl, $fidusId);
 
             // We also create a user for the author
             $emailAddress = $this->getPOSTPayloadVariable("email");
@@ -388,7 +386,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     /**
      * @return mixed
      */
-    function createNewSubmission($title, $journalId, $fidusUrl, $fidusRevisionId) {
+    function createNewSubmission($title, $journalId, $fidusUrl, $fidusId) {
         $locale = AppLocale::getLocale();
 
         $submissionDao = Application::getSubmissionDAO();
@@ -417,12 +415,10 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $submission->setData("sectionId", $sectionId);
         $submission->setTitle($title, $locale);
         $submission->setCleanTitle($title, $locale);
-        // Insert the submission
-
         // Set fidus writer related fields.
         $submission->setData("fidusUrl", $fidusUrl);
-        $submission->setData("fidusRevisionId", $fidusRevisionId);
-
+        $submission->setData("fidusId", $fidusId);
+        // Insert the submission
         $submissionId = $submissionDao->insertObject($submission);
 
         return $submissionId;
@@ -490,7 +486,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewAssignment->getId());
 
         $editorMessageCommentText = $this->getPOSTPayloadVariable("editor_message");
-        $editorAndAuthorMessageCommentText = $this->getPOSTPayloadVariable("message_editor_author");
+        $editorAndAuthorMessageCommentText = $this->getPOSTPayloadVariable("editor_author_message");
         $this->saveCommentForEditor($editorMessageCommentText, $reviewAssignment);
         $this->saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment);
 
@@ -646,73 +642,27 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
 
 
     /**
-     * Find the access rights the current user should have on the editor.
-     * Given that Fidus Writer and OJS have different access rights models,
-     * we translate the access rights to one of three: 1. author, 2. reviewer
-     * or 3. editor, in this order. If a user has multiple types of access
-     * rights, only the first of these will be considered. If a user cannot be
-     * considered to be any of these, false is returned.
-     *
-     * For example:
-     * 1. User A is an administrator of the OJS site and therefore
-     * has editor rights in all journals. User A has sent in a submission to
-     * OJS via Fidus Writer as an author. Because User A is both an editor and
-     * an author, the first one of these will be chosen: The access rights of
-     * user A 'author'.
-     * 2. User B is both a reviewer and an editor in OJS in relation to one
-     * submission. The access rights of user B will be 'reviewer'
-     * 3. User C is registered on the OJS site, but only as a reader without
-     * editing rights. The access rights of user C will be false.
+     * Whether or not the user can be counted as an editor..
+     * @param $user
+     * @param $journalId
+     * @return bool
      */
-    function getAccessRights($user, $submissionId) {
-        $authorDao = DAORegistry::getDAO('AuthorDAO');
-        $author = $authorDao->getPrimaryContact($submissionId);
-
-        $userId = $user->getId();
-
-        $submissionDao = Application::getSubmissionDAO();
-        $submission = $submissionDao->getById($submissionId);
-        $journalId = $submission->getContextId();
+    function isEditor($userId, $journalId) {
 
         $roleDao = DAORegistry::getDAO('RoleDAO');
 
-        // There seems to be no direct connection between authors and users,
-        // so we make a guess.
-        // If the user is in the author group for the journal AND
-        // the email is the same as that of the author who is set as the
-        // primary contact, we assume this is the author.
-        // OBS! This means an author who changes the email address of his OJS
-        // user account will run into problems.
-        if (
-            $roleDao->userHasRole($journalId, $userId, ROLE_ID_AUTHOR) &&
-            $user->getEmail() === $author->getEmail()
-        ) {
-            return array('author', $jounalId, $userId);
-        }
-
-        // Check all registered reviewers if one of them is our user. If so, return 'reviewer'
-        $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignmentsArray = $reviewAssignmentDao->getBySubmissionId($submissionId);
-        foreach ($reviewAssignmentsArray as $reviewAssignmentObject) {
-            if ($reviewAssignmentObject->getReviewerId() === $userId) {
-                return array('reviewer', $journalId, $userId);
-            }
-        }
-
         // Check various roles that all could be counted as editors.
         if ($roleDao->userHasRole($journalId, $userId, ROLE_ID_MANAGER)) {
-            return array('editor', $journalId, $userId);
+            return true;
         } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_SUB_EDITOR)) {
-            return array('editor', $journalId, $userId);
+            return true;
         } elseif ($roleDao->userHasRole(none, $userId, ROLE_ID_SITE_ADMIN)) {
-            return array('editor', $journalId, $userId);
-        } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_GUEST_EDITOR)) {
-            return array('editor', $journalId, $userId);
+            return true;
         } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_ASSISTANT)) {
-            return array('editor', $journalId, $userId);
+            return true;
         }
 
-        return array(false, $journalId);
+        return false;
     }
 
     /**
@@ -721,12 +671,13 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * @param $userId
      * @param $accessRights
      */
-    function getLoginToken($fidusUrl, $userRole, $journalId, $userId) {
+    function getLoginToken($fidusUrl, $fidusId, $versionString, $userId, $isEditor) {
 
         $dataArray = array(
+            'fidus_id' => $fidusId,
+            'version' => $versionString,
             'user_id' => $userId,
-            'user_role' => $userRole,
-            'journal_id' => $journalId,
+            'is_editor' => $isEditor,
             'key' => $this->getApiKey()
         );
 
@@ -740,28 +691,30 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     /**
      * Forwards user to Fidus Writer after checking access rights.
      * @param $fidusUrl
-     * @param $fidusRevisionId
+     * @param $fidusId
      * @param $submissionId
      * @param $version
      * @return string
      */
-    function loginFidusWriter($fidusUrl, $fidusRevisionId, $submissionId) {
-
+    function loginFidusWriter($submissionId, $versionString) {
+        $fwPlugin = $this->getFidusWriterPlugin();
+        $fidusId = $fwPlugin->getSubmissionSetting($submissionId, 'fidusId');
+        $fidusUrl = $fwPlugin->getSubmissionSetting($submissionId, 'fidusUrl');
         $user = $this->getUserFromSession();
-
-        list ($userRole, $journalId) = $this->getAccessRights($user, $submissionId);
-
-        if ($userRole === false) {
-            $this->sendErrorResponse("Error: insufficient access rights");
-            return;
-        }
+        $submissionDao = Application::getSubmissionDAO();
+        $submission = $submissionDao->getById($submissionId);
+        $journalId = $submission->getContextId();
+        // Editor users will fallback to being logged in as the editor user on the
+        // backend if they are not registered as either reviewers or authors of
+        // the revision they are trying to look at.
+        $isEditor = $this->isEditor($user->getId(), $journalId, $submission);
 
         $userId = $user->getId();
-        $loginToken = $this->getLoginToken($fidusUrl, $userRole, $journalId, $userId);
+        $loginToken = $this->getLoginToken($fidusUrl, $fidusId, $versionString, $userId, $isEditor);
         echo '
 <html>
  <body onload="document.frm1.submit()">
-   <form method="post" action="' . $fidusUrl . '/ojs/revision/' . $fidusRevisionId . '/" name = "frm1" class="inline">
+   <form method="post" action="' . $fidusUrl . '/ojs/revision/' . $fidusId . '/' . $versionString . '/" name = "frm1" class="inline">
     <input type="hidden" name="token" value="' . $loginToken . '">
     <button type="submit" name="submit_param" style="display=none;" value="submit_value" class="link-button"></button>
   </form>

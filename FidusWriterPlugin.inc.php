@@ -29,7 +29,7 @@ class FidusWriterPlugin extends GenericPlugin {
 			HookRegistry::register('reviewassignmentdao::_deletebyid', array($this, 'callbackRemoveReviewer'));
 			HookRegistry::register('reviewrounddao::_insertobject', array($this, 'newRevisionWebHook'));
 			HookRegistry::register('TemplateManager::fetch', array($this, 'templateFetchCallback'));
-			// Add fields fidusRevisionId and fidusUri to submissions
+			// Add fields fidusId and fidusUri to submissions
 			HookRegistry::register('articledao::getAdditionalFieldNames', array($this, 'callbackAdditionalFieldNames'));
             return true;
         }
@@ -146,7 +146,7 @@ class FidusWriterPlugin extends GenericPlugin {
 
 	/**
 	* Retrieve a submission setting from the DB. We use this to get fidusUrl and
-	* fidusRevisionId.
+	* fidusId.
 	* @param $hookName
 	* @param $args
 	* @return bool
@@ -165,8 +165,8 @@ class FidusWriterPlugin extends GenericPlugin {
 	 */
 	function callbackAdditionalFieldNames($hookName, $args) {
 		$returner =& $args[1];
-		$returner[] = 'fidusUri';
-		$returner[] = 'fidusRevisionId';
+		$returner[] = 'fidusUrl';
+		$returner[] = 'fidusId';
 	}
 
 	/**
@@ -184,28 +184,44 @@ class FidusWriterPlugin extends GenericPlugin {
 		if ($templateName == 'controllers/grid/grid.tpl') {
 			$grid = $templateManager->get_template_vars('grid');
 			$title = $grid->getTitle();
-
-			if ($title==='submission.submit.submissionFiles' || $title==='reviewer.submission.reviewFiles') {
+			if (
+                $title==='submission.submit.submissionFiles' ||
+                $title==='reviewer.submission.reviewFiles' ||
+                $title==='editor.submission.revisions'
+            ) {
 				// Not sure if there is another way to find this information,
 				// but the submissionId is part of the URL of this page.
 				$submissionId =  intval($_GET['submissionId']);
-				$fidusRevisionId = $this->getSubmissionSetting($submissionId, 'fidusRevisionId');
-				if ($fidusRevisionId != false) {
+				$fidusId = $this->getSubmissionSetting($submissionId, 'fidusId');
+				if ($fidusId != false) {
 					// This submission is linked to a Fidus Writer instance, so present
 					// link rather the file overview.
 					// If the submission file section is requested, we override the
 					// entire grid with a link to the file in Fidus Writer. This way
 					// there are no surprises of users accidentally trying to add
 					// more files or similar.
+                    $stageId =  intval($_GET['stageId']);
+                    $reviewRound = 0;
+                    $reviewRoundId = $_GET['reviewRoundId'];
+                    if (isset($reviewRoundId)) {
+                        $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+                        $reviewRound = $reviewRoundDao->getById($reviewRoundId);
+                        $reviewRound = $reviewRound->getRound();
+                    }
+                    $revisionType = ($title==='editor.submission.revisions' ? 'A' : 'R');
+                    $versionString = $this->stageToVersion($stageId, $reviewRound, $revisionType);
 
 					$result =& $args[4];
 					$result = '
 					<div class="pkp_controllers_grid">
 						<div class="header">
-						<h4><a href="' . $this->getGatewayPluginUrl() . '/documentReview?submissionId=' . $submissionId . '">
-							' . __('plugins.generic.fidusWriter.linkText') . '
-						</a></h4>
+						<h4>' . __($title) . '</h4>
 						</div>
+                        <div style="text-align: center;">
+                            <a href="' . $this->getGatewayPluginUrl() . '/documentReview?submissionId=' . $submissionId . '&stageId=' . $stageId . '&version=' . $versionString . '">
+							    ' . __('plugins.generic.fidusWriter.linkText') . '
+						    </a>
+                        </div>
 					</div>';
 					return true;
 				}
@@ -225,8 +241,12 @@ class FidusWriterPlugin extends GenericPlugin {
     function callbackAddReviewer($hookName, $args) {
         $row =& $args[1];
         $submissionId = $row[0];
-		$fidusRevisionId = $this->getSubmissionSetting($submissionId, 'fidusRevisionId');
-		if ($fidusRevisionId === false) {
+        $reviewRound = $row[4];
+        $stageId = $row[2];
+        $versionString = $this->stageToVersion($stageId, $reviewRound, 'R');
+
+		$fidusId = $this->getSubmissionSetting($submissionId, 'fidusId');
+		if ($fidusId === false) {
 			// The article was not connected with Fidus Writer, so we send no
 			// notification.
 			return false;
@@ -240,10 +260,8 @@ class FidusWriterPlugin extends GenericPlugin {
 			'key' => $this->getApiKey()
 		];
 		$fidusUrl = $this->getSubmissionSetting($submissionId, 'fidusUrl');
-        $url = $fidusUrl . '/ojs/add_reviewer/' . $fidusRevisionId . '/';
+        $url = $fidusUrl . '/ojs/add_reviewer/' . $fidusId . '/' . $versionString . '/';
 
-        // then send the email address of reviewer to AT.
-        // Authoring tool must give review access to this article with the submission id
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -258,23 +276,27 @@ class FidusWriterPlugin extends GenericPlugin {
      */
     function callbackRemoveReviewer($hookName, $args) {
 		$reviewId =& $args[1];
-		$submissionId = $this->getSubmissionIdByReviewId($reviewId);
-		$fidusRevisionId = $this->getSubmissionSetting($submissionId, 'fidusRevisionId');
+		$reviewAssignment = $this->getReviewAssignmentByReviewId($reviewId);
+        $submissionId = $reviewAssignment->getSubmissionId();
+        $reviewRound = $reviewAssignment->getReviewRoundId();
+        $stageId = $reviewAssignment->getStageId();
+        $versionString = $this->stageToVersion($stageId, $reviewRound, 'R');
 
-		if ($fidusRevisionId === false) {
+		$fidusId = $this->getSubmissionSetting($submissionId, 'fidusId');
+
+		if ($fidusId === false) {
 			// The article was not connected with Fidus Writer, so we send no
 			// notification.
 			return false;
 		}
 
-        $userId = $this->getUserIdByReviewId($reviewId);
         $dataArray = [
-			'user_id' => $userId,
+			'user_id' => $reviewAssignment->getReviewerId(),
 			'key' => $this->getApiKey()
 		];
         // Then send the email address of reviewer to Fidus Writer.
 		$fidusUrl = $this->getSubmissionSetting($submissionId, 'fidusUrl');
-		$url = $fidusUrl. '/ojs/remove_reviewer/' . $fidusRevisionId . '/';
+		$url = $fidusUrl. '/ojs/remove_reviewer/' . $fidusId . '/' . $versionString . '/';
         $this->sendPostRequest($url, $dataArray);
         return false;
     }
@@ -367,41 +389,76 @@ class FidusWriterPlugin extends GenericPlugin {
 
     /**
      * @param $reviewId
-     * @return mixed
+     * @return $reviewAssignment
      */
-    function getUserIdByReviewId($reviewId) {
-        $userDao = DAORegistry::getDAO('UserDAO');
+    function getReviewAssignmentByReviewId($reviewId) {
         /** @var ReviewAssignmentDAO $RADao */
         $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
         $reviewAssignmentArray = $RADao->getById($reviewId);
-		// TODO: Find out if there are any problems here if this assignment
+        // TODO: Find out if there are any problems here if this assignment
 		// contains more than one reviewer.
         if (is_array($reviewAssignmentArray)) {
             $reviewAssignment = $reviewAssignmentArray[0];
         } else {
             $reviewAssignment = $reviewAssignmentArray;
         }
-        /** @var ReviewAssignment $reviewAssignment */
-        $userId = $reviewAssignment->getReviewerId();
-        return $userId;
+        return $reviewAssignment;
     }
 
+
     /**
-     * @param $reviewId
+     * This function converts from the kind of versioning information of a document
+     * as it's stored to the versioning information as it's stored on the FW side.
+     * The main difference is this:
+     * On OJS, a stageId is used to determine whether the document is in
+     * submission (1), internal review (2), external review (3), copyediting (4),
+     * production (5) stage.
+     * Within the review stage, one has to know the round.
+     * Each round allows for the upload of files, first of the reviewer, then of
+     * the author. So we choose to match two version numbers as used in FW to each
+     * round, the first one using $revisionType 'R' (reviewer), the second 'A'
+     * (author).
+     * In FW, we have a version string, similar to a software version number with
+     * three parts divided by dots, such as: 1.0.0 or 3.1.5 . These numbers are:
+     * - The first number represents the stage ID, so it is 1-5.
+     * - The second number represents the round if there is one. Otherwise it is 0.
+     * - The third number is 0 for the 'R' version within a round, and 5 for the
+     * 'A' version.
+     * @param $stageId
+     * @param $reviewRound
+     * @param $revisionType
      * @return int
      */
-    function getSubmissionIdByReviewId($reviewId) {
-        /** @var ReviewAssignmentDAO $RADao */
-        $RADao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignmentArray = $RADao->getById($reviewId);
-        if (is_array($reviewAssignmentArray)) {
-            $reviewAssignment = $reviewAssignmentArray[0];
-        } else {
-            $reviewAssignment = $reviewAssignmentArray;
+    function stageToVersion($stageId, $reviewRound = 0, $revisionType = 'R') {
+        switch ($stageId) {
+            case 1:
+                // submission
+                return '1.0.0';
+                break;
+            case 2:
+                // internal review
+                // TODO: does this also operate with review rounds? Couldn't
+                // find it how to do internal reviews.
+                if ($revisionType=='R') {
+                    return '2.' . $reviewRound . '.0';
+                } else {
+                    return '2.' . $reviewRound . '.5';
+                }
+                break;
+            case 3:
+                if ($revisionType=='R') {
+                    return '3.' . $reviewRound . '.0';
+                } else {
+                    return '3.' . $reviewRound . '.5';
+                }
+                break;
+            case 4:
+                return '4.0.0';
+                break;
+            case 5:
+                return '5.0.0';
+                break;
         }
-        /** @var ReviewAssignment $reviewAssignment */
-        $submissionId = $reviewAssignment->getSubmissionId();
-        return $submissionId;
     }
 
     /**

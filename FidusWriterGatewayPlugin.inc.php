@@ -156,6 +156,14 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             }
 
             if ($restCallType === "POST") {
+
+                $key = $_GET['key'];
+                if ($this->getApiKey() !== $key) {
+                    // Not correct api key.
+                    $error = "Incorrect API Key";
+                    $this->sendErrorResponse($error);
+                }
+
                 switch ($operator) {
                     case 'test': // Basic test
                         $response = array(
@@ -163,32 +171,22 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                             "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
-
                         break;
                     case 'authorSubmit':
                         // in case author submits an article
-                        $key = $_GET['key'];
-                        if ($this->getApiKey() !== $key) {
-                            // Not correct api key.
-                            $error = "Incorrect API Key";
-                            $this->sendErrorResponse($error);
-                            break;
-                        }
                         $resultArray = $this->authorSubmit();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
-                            "journal_id" => $resultArray["journalId"],
+                            //"journal_id" => $resultArray["journalId"],
                             "user_id" => $resultArray["userId"],
                             "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
                         break;
-                    case 'articleReviews':
+                    case 'reviewerSubmit':
                         // in case a reviewer submits the article review
-                        $resultArray = $this->saveArticleReview();
+                        $this->reviewerSubmit();
                         $response = array(
-                            "journal_id" => $resultArray["journalId"],
-                            "user_id" => $resultArray["userId"],
                             "version" => $this->getApiVersion()
                         );
                         $this->sendJsonResponse($response);
@@ -231,8 +229,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * @return string
      */
     function getPOSTPayloadVariable($varName) {
-        //todo: find the cors_token from header , check of is in $_SERVER or other places.
-        //   error_log("loggingCRF:". $_SERVER["csrf_token"],0);  //csrfToken
         if (isset($_POST[$varName])) {
             return $_POST[$varName];
         }
@@ -338,8 +334,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                 throw new Exception("Error: no submission with given submissionId $submissionId exists");
             }
 
-            //$submissionDao->updateSetting($submissionId, 'fidusId', [none => $fidusId], 'string', True);
-
         } else {
             // This is a new submission so we create it in the database
             $title = $this->getPOSTPayloadVariable("title");
@@ -424,65 +418,58 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         return $submissionId;
     }
 
+    /**
+     *Takes a FW versionString and returns a stageId and round number.
+     * Does the opposite of stageToVersion(...) in the parent plugin.
+     */
+    function versionToStage($versionString) {
+        $parts = explode('.', $versionString);
+        $stageId = intval($parts[0]);
+        $round = intval($parts[1]);
+        if ($parts[2]=='5') {
+            $revisionType = 'Author';
+        } else {
+            $revisionType = 'Reviewer';
+        }
+
+        $returnArray = array();
+
+        $returnArray['stageId'] = $stageId;
+        $returnArray['round'] = $round;
+        $returnArray['revisionType'] = $revisionType;
+
+        return $returnArray;
+    }
+
 
     /**
      * Takes an article review submission from reviewers
      * @return array
      * @throws Exception
      */
-    function saveArticleReview() {
-        $journalId = $this->getPOSTPayloadVariable("journal_id");
-        if ($journalId === NULL || $journalId === "") {
-            throw new Exception("Error: journal_id is not set or is empty in the header");
-        }
+    function reviewerSubmit() {
 
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
-        if ($submissionId === NULL || $submissionId === "") {
-            throw new Exception("Error: submissionId is not set or is empty in the header");
-        }
+        $versionString = $this->getPOSTPayloadVariable("version");
+        $reviewerId = $this->getPOSTPayloadVariable("user_id");
 
         $submissionDao = Application::getSubmissionDAO();
         $submission = $submissionDao->getById($submissionId);
-        if ($submission === NUll || $submission === "") {
-            throw new Exception("Error: no submission with given submissionId $submissionId exists");
-        }
-        // WORKFLOW_STAGE_ID_INTERNAL_REVIEW is the stage a submission is in
-        // during the internal peer review process (== 2 in database).
-        $submission->setStageId(WORKFLOW_STAGE_ID_INTERNAL_REVIEW);
-
-        $emailAddress = $this->getPOSTPayloadVariable("email");
-        if ($emailAddress === NULL || $emailAddress === "") {
-            throw new Exception("Error: $emailAddress is not set in the header");
+        if ($submission ===null || $submission === "") {
+            throw new Exception("Error: no submission with given submissionId $submissionId exists.");
         }
 
+        $versionInfo = $this->versionToStage($versionString);
+        $stageId = $versionInfo['stageId'];
+        $round = $versionInfo['round'];
 
-        /** @var User */
-        $user = $this->getUserForReviewing($emailAddress, $journalId);
-        $userId = $user->getId();
-
-        if ($user === NULL || $user === "") {
-            throw new Exception("Error: There is not user with this email and journal $emailAddress is not set in the header");
-        }
+        $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+        $reviewRoundObj = $reviewRoundDao->getReviewRound($submissionId, $stageId, $round);
 
         $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-
-        $reviewAssignmentsArray = $reviewAssignmentDao->getBySubmissionId($submission->getId());
-
-        $reviewAssignment = NULL;
-        foreach ($reviewAssignmentsArray as $reviewAssignmentObject) {
-            /** @var $reviewAssignmentObject  ReviewAssignment */
-            if ($reviewAssignmentObject->getReviewerId() === $userId) {
-                $reviewAssignment = $reviewAssignmentObject;
-            }
-        }
-
-        if ($reviewAssignment === NULL) {
-            throw new Exception('Error: user with email address ' . $emailAddress . ' has not right to review this article');
-        }
-
+        $reviewAssignment = $reviewAssignmentDao->getReviewAssignment($reviewRoundObj->getId(), $reviewerId);
 
         $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
-        /* @var $reviewerSubmissionDao ReviewerSubmissionDAO */
         $reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewAssignment->getId());
 
         $editorMessageCommentText = $this->getPOSTPayloadVariable("editor_message");
@@ -490,15 +477,8 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $this->saveCommentForEditor($editorMessageCommentText, $reviewAssignment);
         $this->saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment);
 
-
         $this->updateReviewStepAndSaveSubmission($reviewerSubmission);
-        $resultArray = array(
-            "journalId" => $journalId,
-            "submissionId" => $submissionId,
-            "userId" => $userId,
-        );
-        return $resultArray;
-
+        return;
     }
 
     /**
@@ -619,29 +599,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
     }
 
     /**
-     * @param $emailAddress
-     * @param $journalId
-     * @return PKPUser|User
-     * @throws Exception
-     * @internal param $firstName
-     * @internal param $lastName
-     */
-    function getUserForReviewing($emailAddress, $journalId) {
-        /** @var UserDAO $userDao */
-        $userDao = DAORegistry::getDAO('UserDAO');
-        if ($userDao->userExistsByEmail($emailAddress)) {
-
-            // User already has account, check if enrolled as author in journal
-            /** @var User */
-            $user = $userDao->getUserByEmail($emailAddress);
-        } else {
-            $user = null;
-        }
-        return $user;
-    }
-
-
-    /**
      * Whether or not the user can be counted as an editor..
      * @param $user
      * @param $journalId
@@ -656,7 +613,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             return true;
         } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_SUB_EDITOR)) {
             return true;
-        } elseif ($roleDao->userHasRole(none, $userId, ROLE_ID_SITE_ADMIN)) {
+        } elseif ($roleDao->userHasRole(CONTEXT_ID_NONE, $userId, ROLE_ID_SITE_ADMIN)) {
             return true;
         } elseif ($roleDao->userHasRole($journalId, $userId, ROLE_ID_ASSISTANT)) {
             return true;

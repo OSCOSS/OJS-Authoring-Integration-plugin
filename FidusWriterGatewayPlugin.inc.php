@@ -335,13 +335,14 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             }
             // Given that this is a resubmission, we need to set the status of
             // the stage to REVIEW_ROUND_STATUS_RESUBMITTED.
-            $submissionId = $this->getPOSTPayloadVariable("version");
-            $versionInfo = $versionToStage($versionString);
+            $versionString = $this->getPOSTPayloadVariable("version");
+            $versionInfo = $this->versionToStage($versionString);
             $stageId = $versionInfo['stageId'];
             $round = $versionInfo['round'];
             $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
             $reviewRound = $reviewRoundDao->getReviewRound($submissionId, $stageId, $round);
             $reviewRound->setStatus(REVIEW_ROUND_STATUS_RESUBMITTED);
+            $reviewRoundDao->updateObject($reviewRound);
 
         } else {
             // This is a new submission so we create it in the database

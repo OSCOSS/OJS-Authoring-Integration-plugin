@@ -333,6 +333,15 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
             if ($submission === NUll || $submission === "") {
                 throw new Exception("Error: no submission with given submissionId $submissionId exists");
             }
+            // Given that this is a resubmission, we need to set the status of
+            // the stage to REVIEW_ROUND_STATUS_RESUBMITTED.
+            $submissionId = $this->getPOSTPayloadVariable("version");
+            $versionInfo = $versionToStage($versionString);
+            $stageId = $versionInfo['stageId'];
+            $round = $versionInfo['round'];
+            $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+            $reviewRound = $reviewRoundDao->getReviewRound($submissionId, $stageId, $round);
+            $reviewRound->setStatus(REVIEW_ROUND_STATUS_RESUBMITTED);
 
         } else {
             // This is a new submission so we create it in the database
@@ -464,10 +473,10 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $round = $versionInfo['round'];
 
         $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-        $reviewRoundObj = $reviewRoundDao->getReviewRound($submissionId, $stageId, $round);
+        $reviewRound = $reviewRoundDao->getReviewRound($submissionId, $stageId, $round);
 
         $reviewAssignmentDao = DAORegistry::getDAO('ReviewAssignmentDAO');
-        $reviewAssignment = $reviewAssignmentDao->getReviewAssignment($reviewRoundObj->getId(), $reviewerId);
+        $reviewAssignment = $reviewAssignmentDao->getReviewAssignment($reviewRound->getId(), $reviewerId);
 
         $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
         $reviewerSubmission = $reviewerSubmissionDao->getReviewerSubmission($reviewAssignment->getId());

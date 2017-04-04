@@ -80,11 +80,9 @@ setting > website > plugins -> Fidus Writer Integration plugin (triangle to left
 
 6. Activate connection on Fidus Writer side
 
-These settings are in the configuration.php file in the section SERVER_INFO.
+Enter the administration interface at your Fidus Writer installation (http://myserver.com/admin).
 
-Set the OJS_URL to the base URL of your OJS installation (for example: "http://www.myojssite.com").
-
-Set the OJS_KEY to the API Key chosen in step 4.
+In the section "Custom views" click on "Register journal". Enter the URL and API Key (from step 4) pf your OJS installation.
 
 ## Documentation
 

@@ -185,7 +185,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                         break;
                     case 'reviewerSubmit':
                         // in case a reviewer submits the article review
-                        $this->reviewerSubmit();
+                        $this->reviewerSubmit($request);
                         $response = array(
                             "version" => $this->getApiVersion()
                         );
@@ -457,7 +457,7 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      * @return array
      * @throws Exception
      */
-    function reviewerSubmit() {
+    function reviewerSubmit($request) {
 
         $submissionId = $this->getPOSTPayloadVariable("submission_id");
         $versionString = $this->getPOSTPayloadVariable("version");
@@ -487,7 +487,98 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $this->saveCommentForEditor($editorMessageCommentText, $reviewAssignment);
         $this->saveCommentForEditorAndAuthor($editorAndAuthorMessageCommentText, $reviewAssignment);
 
+        // Set review step to last step
         $this->updateReviewStepAndSaveSubmission($reviewerSubmission);
+
+        // Mark the review assignment as completed.
+		$reviewAssignment->setDateCompleted(Core::getCurrentDate());
+		$reviewAssignment->stampModified();
+
+        // Set the recommendation
+        $recommendation = intval($this->getPOSTPayloadVariable("recommendation"));
+        $reviewAssignment->setRecommendation($recommendation);
+		$reviewAssignmentDao->updateObject($reviewAssignment);
+
+        // Send notifications to everyone who should be informed.
+        $stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+		$stageAssignments = $stageAssignmentDao->getBySubmissionAndStageId($submissionId, $stageId);
+		$userGroupDao = DAORegistry::getDAO('UserGroupDAO');
+		$receivedList = array(); // Avoid sending twice to the same user.
+        $notificationMgr = new NotificationManager();
+
+		while ($stageAssignment = $stageAssignments->next()) {
+			$userId = $stageAssignment->getUserId();
+			$userGroup = $userGroupDao->getById($stageAssignment->getUserGroupId(), $submission->getContextId());
+
+			// Only send notifications about reviewer comment notification to managers and editors
+            // and only send to usrs who have not received a notificcation already.
+			if (!in_array(
+                $userGroup->getRoleId(),
+                array(ROLE_ID_MANAGER, ROLE_ID_SUB_EDITOR)) || in_array($userId, $receivedList)
+            ) continue;
+
+			$notificationMgr->createNotification(
+				$request, $userId, NOTIFICATION_TYPE_REVIEWER_COMMENT,
+				$submission->getContextId(), ASSOC_TYPE_REVIEW_ASSIGNMENT, $reviewAssignment->getId()
+			);
+
+			$receivedList[] = $userId;
+		}
+
+        // Update the review round status.
+		$reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
+		$reviewRound = $reviewRoundDao->getById($reviewAssignment->getReviewRoundId());
+		$reviewAssignments = $reviewAssignmentDao->getByReviewRoundId($reviewRound->getId());
+		$reviewRoundDao->updateStatus($reviewRound, $reviewAssignments);
+
+        $contextId = $submission->getContextId();
+
+
+		// Update the notification on whether all reviews are in.
+		$stageAssignmentDao = DAORegistry::getDAO('StageAssignmentDAO');
+		$stageAssignments = $stageAssignmentDao->getEditorsAssignedToStage($submissionId, $stageId);
+
+		$notificationDao = DAORegistry::getDAO('NotificationDAO');
+
+		foreach ($stageAssignments as $stageAssignment) {
+			$userId = $stageAssignment->getUserId();
+
+			// Get any existing notification.
+			$notificationFactory = $notificationDao->getByAssoc(
+				ASSOC_TYPE_REVIEW_ROUND,
+				$reviewRound->getId(), $userId,
+				NOTIFICATION_TYPE_ALL_REVIEWS_IN,
+				$contextId
+			);
+
+			$currentStatus = $reviewRound->getStatus();
+			if (in_array($currentStatus, $reviewRoundDao->getEditorDecisionRoundStatus()) ||
+			in_array($currentStatus, array(REVIEW_ROUND_STATUS_PENDING_REVIEWERS, REVIEW_ROUND_STATUS_PENDING_REVIEWS))) {
+				// Editor has taken a decision in round or there are pending
+				// reviews or no reviews. Delete any existing notification.
+				if (!$notificationFactory->wasEmpty()) {
+					$notification = $notificationFactory->next();
+					$notificationDao->deleteObject($notification);
+				}
+			} else {
+				// There is no currently decision in round. Also there is reviews,
+				// but no pending reviews. Insert notification, if not already present.
+				if ($notificationFactory->wasEmpty()) {
+					$notificationMgr->createNotification($request, $userId, NOTIFICATION_TYPE_ALL_REVIEWS_IN, $contextId,
+						ASSOC_TYPE_REVIEW_ROUND, $reviewRound->getId(), NOTIFICATION_LEVEL_TASK);
+				}
+			}
+		}
+
+		// Remove the review task
+		$notificationDao = DAORegistry::getDAO('NotificationDAO');
+		$notificationDao->deleteByAssoc(
+			ASSOC_TYPE_REVIEW_ASSIGNMENT,
+			$reviewAssignment->getId(),
+			$reviewAssignment->getReviewerId(),
+			NOTIFICATION_TYPE_REVIEW_ASSIGNMENT
+		);
+
         return;
     }
 
@@ -499,12 +590,11 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
      */
     function updateReviewStepAndSaveSubmission(ReviewerSubmission &$reviewerSubmission) {
         //review step
-        $submissionCompleteStep = 3;
+        $submissionCompleteStep = 4;
         $nextStep = $submissionCompleteStep;
         if ($reviewerSubmission->getStep() < $nextStep) {
             $reviewerSubmission->setStep($nextStep);
         }
-        $reviewerSubmission->setRecommendation("See Comments");
         // Save the reviewer submission.
         $reviewerSubmissionDao = DAORegistry::getDAO('ReviewerSubmissionDAO');
         /* @var $reviewerSubmissionDao ReviewerSubmissionDAO */

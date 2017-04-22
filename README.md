@@ -26,13 +26,13 @@ An installation of OJS is needed. To install OJS please followup its readme in h
 To have its latest version please check out the master branch.
 
 #####2.Second step
-Download and copy the plugin files from github into plugins/generic/ojsIntegrationRestApi folder inside your OJS folder.
+Download and copy the plugin files from github into plugins/generic/ojsAuthoringIntegration folder inside your OJS folder.
 Create the folder if it does not exist. You can achieve this by running these commands:
 
 ```
 cd plugins/generic/
-git clone https://github.com/OSCOSS/OJSIntegrationRestAPIplugin.git
-mv OJSIntegrationRestAPIplugin ojsIntegrationRestAPI
+git clone https://github.com/OSCOSS/OJS-Authoring-Integration-plugin.git
+mv OJS-Authoring-Integration-plugin ojsAuthoringIntegration
 cd ../..
 ```
 

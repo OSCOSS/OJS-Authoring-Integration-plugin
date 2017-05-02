@@ -1,7 +1,8 @@
 OJS-Authoring-Integration-plugin
-Bonn University - GESIS Institute
-OSCOSS Project
 ===========
+
+##Bonn University - GESIS Institute
+##OSCOSS Project
 
 
 #OJS-Authoring-Integration-plugin

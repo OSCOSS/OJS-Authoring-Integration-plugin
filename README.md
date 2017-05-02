@@ -1,9 +1,10 @@
 OJS-Authoring-Integration-plugin
 ===========
 
-##Bonn University - GESIS Institute
-##OSCOSS Project
-
+Bonn University - GESIS Institute
+----
+OSCOSS Project
+----
 
 #OJS-Authoring-Integration-plugin
 Rest API Plugin for OJS to work with external web-based authoring and text editing and publishing systems. Open joural sysems is an opensource journal management and publishing system that has been developed by the Public Knowledge Project. This Plugin for OJS creates a unified authoring, reviewing and publishing system by integrating the matching services of Fiduswriter online shared authoring tool and the OJS system.

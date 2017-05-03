@@ -3,44 +3,35 @@
 ##### OSCOSS Project
 
 
-# FidusWriterPlugin
+# OJS-FidusWriter
 
-This plugin allows the Open Journal Systems (OJS) to work with Fidus Writer instances as one integrated publishing system.
-OJS is an open source journal management and publishing system that has been developed by the Public Knowledge Project. Fidus Writer is an open source academic collaborative and online text processor.
+OJS-FidusWriter is an Open Journal Systems (OJS) plugin to connect an OJS instance with Fidus Writer to from an integrated
+publishing system. 
+This plugin has to be combined with the FidusWriter-OJS plugin for Fidus Writer.
 
-The plugin is installed in an OJS instance.
+Project page:
+https://www.fiduswriter.org/ojs-integration/
 
-Source code of the plugin:
-https://github.com/OSCOSS/OJSIntegrationRestAPIplugin
-
-Open Journal Systems (OJS):
-https://pkp.sfu.ca/ojs/
-
-Fiduswriter:
-https://www.fiduswriter.org/
-
-
-#### Use case: FidusWriter & beyond
-
-This plugin has been programmed with the use case of integrating Fidus Writer, but we have written it as open so that in the future it will hopefully be possible to make it work with a range of different online text processors. For this reason, we have tried to incorporate as much of a REST API as possible.
 
 ## Installation:
 
-1. Install OJS
+1. Follow the instructions for the FidusWriter-OJS plugin to install Fidus Writer and the connector on the 
+   Fidus Writer side: https://github.com/fiduswriter/fiduswriter-ojs
+
+2. Install OJS
 
 An installation of OJS is needed. To install OJS please follow the instructions at https://github.com/pkp/ojs/
 
 To install the latest version, please check out the master branch.
 
-2. Download plugin files
+3. Download plugin files
 
 Download and copy the plugin files from github into plugins/generic/fidusWriter inside your OJS folder.
 Create the folder if it does not exist. You can achieve this by running these commands:
 
 ```
 cd plugins/generic/
-git clone https://github.com/OSCOSS/OJSIntegrationRestAPIplugin.git
-mv OJSIntegrationRestAPIplugin fidusWriter
+git clone https://github.com/fiduswriter/ojs-fiduswriter.git fidusWriter
 cd ../..
 ```
 3. Register plugin with OJS
@@ -59,21 +50,14 @@ Make sure you have set up at least one journal on your site. Otherwise the setti
 
 Open the OJS interface and select "ENABLE" under the settings "Fidus Writer Integration Plugin" under the following routes:
 
- in OJS 3.0 :
-
  setting > website > plugins
 
-in OJS < 3.0:
-
-Home > User > Journal Management > Plugin Management
 
 5. Configure the API key in OJS
 
 Come up with an API Key to allow secure communications between Fidus Writer and OJS. This is just a single long text string that you should not share with anyone that will need to be entered in the configurations of Fidus Writer and OJS. Be cautious: The key allows automatic login into Fidus Writer and OJS in various ways, so do not share it!
 
 To set the key in OJS, go to the settings of the Fidus Writer integration plugin under the following routes:
-
-in OJS 3.0 :
 
 setting > website > plugins -> Fidus Writer Integration plugin (triangle to left) -> Settings -> Enter API key -> Save.
 
@@ -83,23 +67,3 @@ setting > website > plugins -> Fidus Writer Integration plugin (triangle to left
 Enter the administration interface at your Fidus Writer installation (http://myserver.com/admin).
 
 In the section "Custom views" click on "Register journal". Enter the URL and API Key (from step 4) pf your OJS installation.
-
-## Documentation
-
-Provided calls:
-GET: RestApiGatewayPlugin/Journals?userEmail="Afshin@test.com"
-
-#### OJS 3 usage manual:
-https://pkp.gitbooks.io/ojs3/content/en
-
-#### Sample OJS plugin:
-https://pkp.sfu.ca/ojs/docs/technicalreference/2.1/pluginsSamplePlugin.html
-
-#### OJS 3 code report:
-https://pkp.sfu.ca/ojs/doxygen/master/html/modules.html
-
-#### OJS plugins basics:
-https://pkp.sfu.ca/ojs/docs/technicalreference/2.1/plugins.html
-
-#### About gateway plugins
-https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementGatewayPlugins.html

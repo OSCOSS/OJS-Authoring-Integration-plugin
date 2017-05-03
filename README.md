@@ -2,7 +2,7 @@
 
 OJS-FidusWriter is an Open Journal Systems (OJS) plugin to connect an OJS instance with Fidus Writer to from an integrated
 publishing system. 
-This plugin has to be combined with the FidusWriter-OJS plugin for Fidus Writer.
+This plugin has to be combined with the [FidusWriter-OJS plugin](https://github.com/fiduswriter/fiduswriter-ojs) for Fidus Writer.
 
 Project page:
 https://www.fiduswriter.org/ojs-integration/

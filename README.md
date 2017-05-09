@@ -88,3 +88,11 @@ https://pkp.sfu.ca/ojs/docs/technicalreference/2.1/plugins.html
 
 #### About Gateway Plugins
 https://pkp.sfu.ca/ojs/docs/userguide/2.3.3/journalManagementGatewayPlugins.html
+
+## License
+
+This software is released under the the GNU General Public License.
+
+See the file License.md included with this distribution for the terms of this license.
+
+Third parties are welcome to modify and redistribute the plugin in entirety or parts according to the terms of this license. We also welcome patches for improvements or bug fixes to the software.

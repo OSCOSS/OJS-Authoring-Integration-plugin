@@ -56,17 +56,15 @@ class FidusWriterSettingsForm extends Form {
 	/**
 	 * Save settings.
 	 */
-	function execute() {
+	function execute($object = NULL) {
 		$plugin =& $this->plugin;
-		$journalId = $this->journalId;
-
 		$plugin->updateSetting(CONTEXT_ID_NONE, 'apiKey', trim($this->getData('apiKey'),"\"\';"), 'string');
 	}
 	/**
 	 * Fetch the form.
 	 * @copydoc Form::fetch()
 	 */
-	function fetch($request) {
+	function fetch($request, $template = NULL, $display = false) {
 		$templateMgr = TemplateManager::getManager($request);
 		$templateMgr->assign('pluginName', $this->plugin->getName());
 		return parent::fetch($request);
@@ -75,8 +73,8 @@ class FidusWriterSettingsForm extends Form {
 	/**
 	 * Validate form data.
 	 */
-	function validate() {
-		if (!parent::validate()) return false;
+	function validate($callHooks = true) {
+		if (!parent::validate($callHooks)) return false;
 
 		return true;
 	}

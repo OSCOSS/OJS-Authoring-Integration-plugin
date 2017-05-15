@@ -12,6 +12,7 @@
 	<message key="plugins.generic.fidusWriter.settings">Settings</message>
     <message key="plugins.generic.fidusWriter.settings.apiKey.description">Please choose a secret API key to allow communication with Fidus Writer servers.</message>
     <message key="plugins.generic.fidusWriter.settings.apiKey">Fidus Writer API Key</message>
+	<message key="plugins.generic.fidusWriter.settings.saved">Fidus Writer API Key has been saved</message>
     <message key="plugins.generic.fidusWriter.manager.settings.apiKeyRequired">The Fidus Writer API Key is required!</message>
 	<message key="plugins.generic.fidusWriter.linkText">Open document in Fidus Writer</message>
 </locale>

@@ -10,6 +10,10 @@
  * FidusWriter plugin settings
  *
  *}
+<div id="fidusWriterSettings">
+<div id="description">{translate key="plugins.generic.fidusWriter.description"}</div>
+<h3>{translate key="plugins.generic.fidusWriter.settings"}</h3>
+
 
 <script type="text/javascript">
 	$(function() {ldelim}
@@ -17,7 +21,7 @@
 		$('#fidusWriterSettingsForm').pkpHandler('$.pkp.controllers.form.AjaxFormHandler');
 	{rdelim});
 </script>
-<form class="pkp_form" id="fidusWriterSettingsForm" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" category="generic" plugin=$pluginName verb="save"}">
+<form class="pkp_form" id="fidusWriterSettingsForm" method="post" action="{url router=$smarty.const.ROUTE_COMPONENT op="manage" category="generic" plugin=$pluginName verb="settings" save=true}">
 	{csrf}
 	{include file="common/formErrors.tpl"}
 	{include file="controllers/notification/inPlaceNotification.tpl" notificationId="fidusWriterSettingsFormNotification"}
@@ -27,3 +31,6 @@
 	{/fbvFormSection}
     {fbvFormButtons id="fidusWriterSettingsFormSubmit" submitText="common.save" hideCancel=true}
 </form>
+
+<p><span class="formRequired">{translate key="common.requiredField"}</span></p>
+</div>

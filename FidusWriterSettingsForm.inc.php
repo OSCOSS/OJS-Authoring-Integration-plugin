@@ -21,7 +21,7 @@ import('lib.pkp.classes.form.Form');
 class FidusWriterSettingsForm extends Form {
 
 	/** @var $plugin object */
-	var $plugin;
+	private $_plugin;
 
 	/**
 	 * Constructor
@@ -29,11 +29,9 @@ class FidusWriterSettingsForm extends Form {
 	 * @param $journalId int
 	 */
 	function __construct($plugin) {
-		$this->plugin = $plugin;
+		$this->_plugin = $plugin;
 
 		parent::__construct($plugin->getTemplatePath() . 'settingsForm.tpl');
-
-		$this->addCheck(new FormValidator($this, 'apiKey', 'required', 'plugins.generic.fidusWriter.manager.settings.apiKeyRequired'));
 		$this->addCheck(new FormValidatorPost($this));
 		$this->addCheck(new FormValidatorCSRF($this));
 	}
@@ -42,7 +40,7 @@ class FidusWriterSettingsForm extends Form {
 	 * Initialize form data.
 	 */
 	function initData() {
-		$plugin = $this->plugin;
+		$plugin = $this->_plugin;
 		$this->setData('apiKey', $plugin->getSetting(CONTEXT_ID_NONE, 'apiKey'));
 	}
 
@@ -51,33 +49,27 @@ class FidusWriterSettingsForm extends Form {
 	 */
 	function readInputData() {
 		$this->readUserVars(array('apiKey',));
+		$this->addCheck(new FormValidator($this, 'apiKey', 'required', 'plugins.generic.fidusWriter.manager.settings.apiKeyRequired'));
 	}
 
 	/**
 	 * Save settings.
 	 */
 	function execute($object = NULL) {
-		$plugin =& $this->plugin;
+		$plugin = $this->_plugin;
 		$plugin->updateSetting(CONTEXT_ID_NONE, 'apiKey', trim($this->getData('apiKey'),"\"\';"), 'string');
 	}
+
 	/**
 	 * Fetch the form.
 	 * @copydoc Form::fetch()
 	 */
 	function fetch($request, $template = NULL, $display = false) {
 		$templateMgr = TemplateManager::getManager($request);
-		$templateMgr->assign('pluginName', $this->plugin->getName());
+		$templateMgr->assign('pluginName', $this->_plugin->getName());
 		return parent::fetch($request);
 	}
 
-	/**
-	 * Validate form data.
-	 */
-	function validate($callHooks = true) {
-		if (!parent::validate($callHooks)) return false;
-
-		return true;
-	}
 }
 
 ?>

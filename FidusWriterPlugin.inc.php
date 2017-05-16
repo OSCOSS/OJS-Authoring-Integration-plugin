@@ -85,7 +85,8 @@ class FidusWriterPlugin extends GenericPlugin {
             $this->getEnabled()?array(
                 new LinkAction(
                     'settings',
-                    new AjaxModal($router->url($request, null, null, 'manage', null, array('verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic')),
+                    new AjaxModal(
+                        $router->url($request, null, null, 'manage', null, array('verb' => 'settings', 'plugin' => $this->getName(), 'category' => 'generic')),
                         $this->getDisplayName()
                     ),
                     __('manager.plugins.settings'),
@@ -101,27 +102,25 @@ class FidusWriterPlugin extends GenericPlugin {
 	 * @copydoc Plugin::manage()
 	 */
     function manage($args, $request) {
-        $this->import('FidusWriterSettingsForm');
  		switch ($request->getUserVar('verb')) {
  			case 'settings':
-				$settingsForm = new FidusWriterSettingsForm($this);
-				$settingsForm->initData();
-				return new JSONMessage(true, $settingsForm->fetch($request));
-                break;
-			case 'save':
-				$settingsForm = new FidusWriterSettingsForm($this);
-				$settingsForm->readInputData();
-				if ($settingsForm->validate()) {
-					$settingsForm->execute();
-					$notificationManager = new NotificationManager();
-					$notificationManager->createTrivialNotification(
-						$request->getUser()->getId(),
-						NOTIFICATION_TYPE_SUCCESS,
-						array('contents' => __('plugins.generic.fidusWriter.settings.saved'))
-					);
-					return new JSONMessage(true);
+                AppLocale::requireComponents(LOCALE_COMPONENT_APP_COMMON,  LOCALE_COMPONENT_PKP_MANAGER);
+                $templateMgr = TemplateManager::getManager($request);
+                $templateMgr->register_function('plugin_url', array($this, 'smartyPluginUrl'));
+
+                $this->import('FidusWriterSettingsForm');
+				$form = new FidusWriterSettingsForm($this);
+
+                if ($request->getUserVar('save')) {
+					$form->readInputData();
+					if ($form->validate()) {
+						$form->execute();
+						return new JSONMessage(true);
+					}
+				} else {
+					$form->initData();
 				}
-				return new JSONMessage(true, $settingsForm->fetch($request));
+				return new JSONMessage(true, $form->fetch($request));
                 break;
  		}
  		return parent::manage($args, $request);
@@ -453,7 +452,7 @@ class FidusWriterPlugin extends GenericPlugin {
      * @return bool
      **/
     function callbackLoadCategory($hookName, $args) {
-        $category = $args[0];
+        $category =& $args[0];
         $plugins =& $args[1];
         switch ($category) {
             case 'gateways':

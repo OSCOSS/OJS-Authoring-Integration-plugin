@@ -177,7 +177,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
                         $resultArray = $this->authorSubmit();
                         $response = array(
                             "submission_id" => $resultArray["submissionId"],
-                            //"journal_id" => $resultArray["journalId"],
                             "user_id" => $resultArray["userId"],
                             "version" => $this->getApiVersion()
                         );
@@ -290,7 +289,6 @@ class FidusWriterGatewayPlugin extends GatewayPlugin {
         $journalDao = DAORegistry::getDAO('JournalDAO');
         /* @var $journalDao JournalDAO */
         $journalsObject = $journalDao->getAll();
-        //$journalsCount = $journalsObject->getCount();
         /** Journal $journal */
         $journal = null;
         $journals = $journalsObject->toAssociativeArray();

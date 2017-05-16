@@ -350,7 +350,7 @@ class FidusWriterPlugin extends GenericPlugin {
         } else {
             $oldRound = $round - 1;
             $reviewRoundDao = DAORegistry::getDAO('ReviewRoundDAO');
-            $oldReviewRound = $reviewRoundDao->getReviewRound($submissionId, $stageId, $round);
+            $oldReviewRound = $reviewRoundDao->getReviewRound($submissionId, $stageId, $oldRound);
             // We need to copy a file from the previous revision round. If the author has
             // submitted something for the round, we use that version.
             // Otherwise, we use the Reviewer's version.

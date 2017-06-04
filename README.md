@@ -19,7 +19,11 @@ An installation of OJS is needed. To install OJS please follow the instructions 
 
 To install the latest version, please check out the master branch.
 
-3. Download plugin files
+3. Setup at least two journals on the OJS instance
+
+This step is required to make the global settings show in the OJS menus.
+
+4. Download plugin files
 
 Download and copy the plugin files from github into plugins/generic/fidusWriter inside your OJS folder.
 Create the folder if it does not exist. You can achieve this by running these commands:
@@ -29,15 +33,15 @@ cd plugins/generic/
 git clone https://github.com/fiduswriter/ojs-fiduswriter.git fidusWriter
 cd ../..
 ```
-3. Register plugin with OJS
+5. Register plugin with OJS
 
-Then, run the upgrade script to register the plugin with the system by running:
+Run the upgrade script to register the plugin with the system by running:
 
 ```
 php tools/upgrade.php upgrade
 ```
 
-4. Activate plugin in OJS
+6. Activate plugin in OJS
 
 Enable the plugin via the OJS website interface:
 
@@ -48,7 +52,7 @@ Open the OJS interface and select "ENABLE" under the settings "Fidus Writer Inte
  setting > website > plugins
 
 
-5. Configure the API key in OJS
+7. Configure the API key in OJS
 
 Come up with an API Key to allow secure communications between Fidus Writer and OJS. This is just a single long text string that you should not share with anyone that will need to be entered in the configurations of Fidus Writer and OJS. Be cautious: The key allows automatic login into Fidus Writer and OJS in various ways, so do not share it!
 
@@ -57,7 +61,7 @@ To set the key in OJS, go to the settings of the Fidus Writer integration plugin
 setting > website > plugins -> Fidus Writer Integration plugin (triangle to left) -> Settings -> Enter API key -> Save.
 
 
-6. Activate connection on Fidus Writer side
+8. Activate connection on Fidus Writer side
 
 Enter the administration interface at your Fidus Writer installation (http://myserver.com/admin).
 

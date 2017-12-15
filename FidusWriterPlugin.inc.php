@@ -3,7 +3,7 @@
 /**
  * Copyright 2016-17, Afshin Sadeghi (sadeghi@cs.uni-bonn.de) of the OSCOSS
  * Project.
- * License: MIT. See LICENSE.md for details.
+ * License: GNU GPL v2. See LICENSE.md for details.
  */
 
 import('lib.pkp.classes.plugins.GenericPlugin');
